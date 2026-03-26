@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Plantilla Pedal</title>
+    <style>
+        /* 
+           MAPA DE POSICIONES (Porcentajes)
+           Lienzo Base: 200px (ancho) x 380px (alto)
+           
+           El CSS usa 'transform: translate(-50%, -50%)' para centrar los elementos.
+           'top' y 'left' definen el CENTRO exacto del control.
+        */
+
+        .mod-pedal {
+            width: 200px;
+            height: 380px;
+            /* SUSTITUIR: Pon el nombre de tu imagen de fondo aquí */
+            background-image: url('background.png');
+            background-size: cover;
+            position: relative;
+            border-radius: 12px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Lógica de centrado común */
+        .knob-container,
+        .switch-container,
+        .led-container {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            /* Centro Horizontal */
+        }
+
+        /* 1. POTENCIÓMETRO (GAIN) */
+        .knob-container {
+            top: 22.5%;
+            /* Y Center ~85px */
+            width: 64px;
+            height: 64px;
+        }
+
+        /* 2. INTERRUPTOR (BYPASS) */
+        .switch-container {
+            top: 74%;
+            /* Y Center ~280px */
+            width: 40px;
+            height: 40px;
+        }
+
+        /* 3. LED (OPCIONAL) */
+        .led-container {
+            top: 7.5%;
+            /* Y Center ~28px */
+            width: 8px;
+            height: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mod-pedal">
+        <!-- ÁREA DEL POTENCIÓMETRO -->
+        <div class="knob-container">
+            <!-- mod-port-symbol debe coincidir con el 'symbol' en tu .ttl -->
+            <div class="mod-knob" mod-role="input-control-port" mod-port-symbol="gain"></div>
+        </div>
+
+        <!-- ÁREA DEL LED (Opcional, borrar si no se usa) -->
+        <!-- <div class="led-container"><div class="mod-led"></div></div> -->
+
+        <!-- ÁREA DEL INTERRUPTOR -->
+        <div class="switch-container">
+            <div class="mod-switch" mod-role="input-control-port" mod-port-symbol="bypass" mod-widget="switch"></div>
+        </div>
+    </div>
+</body>
+
+</html>

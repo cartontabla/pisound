@@ -1,0 +1,143 @@
+classdef vocoder_test_sys < matlab.System
+%#codegen
+
+  properties(Nontunable, Constant)
+    KTest (1,1) int32 = int32(14);
+    GOn   (1,1) double = 0;
+    GOff  (1,1) double = -120;
+    Threshold (1,1) double = 0.5
+  end
+
+  properties(DiscreteState)
+    Phase
+  end
+  
+  methods(Access=protected)
+
+    function [g] = stepImpl(obj, inMod, k, mode) 
+      kk = int32(k);
+      mm = uint8(mode);
+
+      switch mm
+        case 0
+          g = obj.GOff;    % off
+          case 1
+          if kk == obj.KTest
+            g = obj.GOn;
+          else
+            g = obj.GOff;
+          end
+        case 2
+          if kk == obj.KTest
+            g = obj.GOff;
+          else
+            g = obj.GOn;
+          end
+    
+         case 3   % modo diagnóstico
+          if k == 3
+              g = 0;          % pasa completa
+          elseif k == 6
+              g = -120;       % mute total
+          elseif k == 9
+            if mean(inMod) > obj.Threshold
+              g = 0;
+            else
+              g = -120;
+            end
+           else
+             g = -24;        % resto atenuado
+          end
+
+          case 4
+    Kc = double(obj.K);
+    kc = double(k);
+
+    if kc == 1
+        obj.Phase = obj.Phase + 0.05;
+        if obj.Phase > 2*pi
+            obj.Phase = obj.Phase - 2*pi;
+        end
+    end
+
+    kMid = ceil(Kc/2);
+    halfWidth = 2;
+
+    if abs(kc - kMid) <= halfWidth
+        a = 0.5 * (1 + sin(obj.Phase));
+        g = obj.GOff + a * (obj.GOn - obj.GOff);
+    else
+        g = obj.GOff;
+    end
+        otherwise
+          g = 1.0;
+      end
+
+    end
+
+    function resetImpl(obj)
+      obj.Phase = 0;
+    end
+
+    function n = getNumInputsImpl(~)
+      n = 3;
+    end
+
+    function n = getNumOutputsImpl(~)
+      n = 1;
+    end
+
+    function [s1,s2,s3] = getInputSizeImpl(~)
+      s1 = [128 1];   % inMod
+      s2 = [1 1];     % k
+      s3 = [1 1];
+    end
+
+    function [o1,o2] = getOutputSizeImpl(~)
+      o1 = [1 1];     % g
+      o2 = [1 1];     % mon
+    end
+
+    function [d1,d2,d3] = getInputDataTypeImpl(~)
+      d1 = 'double';
+      d2 = 'int32';
+      d3 = 'int8';
+    end
+
+    function [dt1] = getOutputDataTypeImpl(~)
+      dt1 = 'double';
+    end
+
+    function [c1,c2,c3] = isInputComplexImpl(~)
+      c1 = false;
+      c2 = false;
+      c3 = false;
+    end
+
+    function [c1] = isOutputComplexImpl(~)
+      c1 = false;
+    end
+
+    function [f1,f2,f3] = isInputFixedSizeImpl(~)
+      f1 = true;
+      f2 = true;
+      f3 = true;
+    end
+
+    function [f1] = isOutputFixedSizeImpl(~)
+      f1 = true;
+    end
+
+    function names = getInputNamesImpl(~)
+      names = ["inMod","k", "mode"];
+    end
+
+    function names = getOutputNamesImpl(~)
+      names = ["g"];
+    end
+
+    function flag = supportsMultipleInstanceImpl(~)
+      flag = true;
+    end
+  end
+end

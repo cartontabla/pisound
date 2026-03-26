@@ -1,0 +1,87 @@
+<style>
+  .amp-icon{
+    /* Tamaño */
+    --w: 230px;
+    --h: 431px;
+
+    /* KNOB */
+    --knob-size: 96px;
+    --knob-x: 80px;
+    --knob-y: 35px;
+
+    /* JACKS */
+    --in-x: 0px;
+    --out-x: 260px;
+    --inL-y: 200px;
+    --inR-y: 250px;
+    --outL-y: 200px;
+    --outR-y: 250px;
+
+    /* SWITCH + LED */
+    --sw-size: 52px;
+    --sw-x: 89px;
+    --sw-y: 300px;
+
+    --led-size: 12px;
+    --led-x: 90px;
+    --led-y: 290px;
+
+    width: var(--w);
+    height: var(--h);
+    position: relative;
+    box-sizing: border-box;
+
+    background-image: url(/resources/panel.png{{{ns}}});
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .amp-drag{
+    position:absolute; left:0; top:0;
+    width:100%; height:100%;
+    cursor:move;
+    z-index:5;
+  }
+
+  /* Knob: solo geometría (la imagen/filmstrip la pone el CSS externo) */
+  .amp-knob{
+    position:absolute;
+    left: var(--knob-x);
+    top:  var(--knob-y);
+    width: var(--knob-size);
+    height: var(--knob-size);
+    z-index:30;
+  }
+
+  /* Jacks: geometría (host dibuja el jack) */
+  .amp-inL.mod-input, .amp-inR.mod-input,
+  .amp-outL.mod-output, .amp-outR.mod-output{
+    position:absolute !important;
+    z-index:40 !important;
+  }
+  .amp-inL.mod-input   { left: var(--in-x)  !important; top: var(--inL-y)  !important; }
+  .amp-inR.mod-input   { left: var(--in-x)  !important; top: var(--inR-y)  !important; }
+  .amp-outL.mod-output { left: var(--out-x) !important; top: var(--outL-y) !important; }
+  .amp-outR.mod-output { left: var(--out-x) !important; top: var(--outR-y) !important; }
+</style>
+
+<div class="amp-icon">
+  <div class="amp-drag" mod-role="drag-handle"></div>
+
+  <!-- Gain -->
+  <div class="amp-knob"
+       mod-role="input-control-port"
+       mod-port-symbol="gain"
+       mod-widget="film"></div>
+
+  <!-- Host bypass + LED -->
+  <div class="amp-footswitch-hit" mod-role="bypass"></div>
+  <div class="amp-led" mod-role="bypass-light"></div>
+
+  <!-- Audio ports -->
+  <div class="mod-input  mod-input-disconnected  amp-inL"  mod-role="input-audio-port"  mod-port-symbol="in_l"></div>
+  <div class="mod-input  mod-input-disconnected  amp-inR"  mod-role="input-audio-port"  mod-port-symbol="in_r"></div>
+  <div class="mod-output mod-output-disconnected amp-outL" mod-role="output-audio-port" mod-port-symbol="out_l"></div>
+  <div class="mod-output mod-output-disconnected amp-outR" mod-role="output-audio-port" mod-port-symbol="out_r"></div>
+</div>

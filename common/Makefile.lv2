@@ -1,0 +1,41 @@
+.RECIPEPREFIX := >
+
+PROJECT ?= amp
+MODEL   ?= $(PROJECT)
+
+LV2_WRAP ?= $(PROJECT)_lv2.c
+SO_NAME  ?= $(PROJECT).so
+
+COMMON_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+REPO_DIR   := $(abspath $(COMMON_DIR)/..)
+PROJ_DIR   := $(REPO_DIR)/$(PROJECT)
+
+LV2_DIR    := $(PROJ_DIR)/lv2
+GEN_DIR    := $(PROJ_DIR)/$(MODEL)_ert_rtw
+
+SO_PATH    := $(LV2_DIR)/$(SO_NAME)
+
+LV2_CFLAGS := $(shell pkg-config --cflags lv2)
+LV2_LIBS   := $(shell pkg-config --libs lv2)
+
+CFLAGS  := -O3 -fPIC -Wall -std=c99 -fvisibility=hidden \
+           -I$(LV2_DIR) -I$(GEN_DIR) -I$(COMMON_DIR) $(LV2_CFLAGS)
+LDFLAGS := -shared -fPIC -lm $(LV2_LIBS)
+
+SOURCES := \
+  $(LV2_DIR)/$(LV2_WRAP) \
+  $(COMMON_DIR)/pisound_stubs.c \
+  $(GEN_DIR)/$(MODEL).c \
+  $(GEN_DIR)/$(MODEL)_data.c \
+  $(GEN_DIR)/rt_nonfinite.c
+
+all: $(SO_PATH)
+
+$(SO_PATH): $(SOURCES)
+>$(CC) $(CFLAGS) -o "$@" $(SOURCES) $(LDFLAGS)
+
+clean:
+>rm -f "$(SO_PATH)"
+>rm -f "$(LV2_DIR)"/*.o
+
+.PHONY: all clean

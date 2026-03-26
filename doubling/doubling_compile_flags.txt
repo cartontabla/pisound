@@ -1,0 +1,18 @@
+# doubling_compile_flags.txt
+# Flags de compilación para el proyecto cobaya doubling
+#
+# CTRL_MIDI_PORT: nombre ALSA del Oxygen 25.
+#   Si snd_seq_parse_address falla (puerto no encontrado al arrancar),
+#   conectar manualmente: aconnect "Oxygen 25:0" pisound-control:in
+#   Para ver puertos disponibles: aconnect -l
+#
+# CTRL_CONFIG_FILE: ruta relativa desde donde se ejecuta el binario
+#   (doubling_app se ejecuta desde ~/pisound/doubling/)
+
+-DENABLE_CONTROL
+-DENABLE_OSC
+-DCTRL_MIDI_PORT="Oxygen 25:0"
+-DCTRL_CONFIG_FILE="../common/control/ctrl_config_doubling.txt"
+-DCTRL_NUM_PARAMS=4
+-DCTRL_SAMPLE_RATE=48000
+-DCTRL_FRAME_SIZE=128

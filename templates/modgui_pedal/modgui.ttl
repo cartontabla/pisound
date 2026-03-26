@@ -1,0 +1,33 @@
+@prefix modgui: <http://moddevices.com/ns/modgui#> .
+@prefix lv2:    <http://lv2plug.in/ns/lv2core#> .
+
+<!-- SUSTITUIR: <http://pisound.org/plugins/TUNOMBRE> por la URI de tu plugin -->
+<http://pisound.org/plugins/TU_PLUGIN>
+    modgui:gui [
+        modgui:resourcesDirectory <modgui> ;
+        modgui:iconTemplate <modgui/icon.html> ;
+        modgui:stylesheet <modgui/theme.css> ;
+        modgui:screenshot <modgui/screenshot.png> ;
+        modgui:thumbnail <modgui/thumbnail.png> ;
+        modgui:brand "Pisound" ;
+        
+        <!-- SUSTITUIR: Etiqueta que aparecerá en la librería -->
+        modgui:label "Mi Plugin" ;
+        
+        modgui:model "boxy" ;
+        modgui:panel "1-select-1-knob" ;
+        modgui:color "blue" ;
+        modgui:knob "black" ;
+        
+        <!-- DEFINICIÓN DE PUERTOS -->
+        <!-- Vincula cada control gráfico con su puerto LV2 usando el 'index' o 'symbol' -->
+        modgui:port [
+            lv2:index 4 ;             <!-- Índice del puerto en amp.ttl -->
+            lv2:symbol "gain" ;       <!-- Símbolo del puerto en amp.ttl -->
+            modgui:name "Gain" ;      <!-- Nombre visible en el GUI -->
+        ] , [
+            lv2:index 5 ;
+            lv2:symbol "bypass" ;
+            modgui:name "Bypass" ;
+        ] ;
+    ] .

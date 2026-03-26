@@ -1,0 +1,4 @@
+-DPARAM_STRUCT_TYPE=P_pitch_T
+-DPARAM_STRUCT_VAR=pitch_P
+-DPARAM_P1_LABEL="Semitone"
+-DPARAM_P1_LVALUE=pitch_P.Semitone_rt

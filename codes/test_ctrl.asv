@@ -1,0 +1,63 @@
+Fs = 48000;
+N  = 128;
+
+nFramesSeg = 30;
+
+A1 = 0.01;        % ~ -40 dB
+A2 = 0.2511886;   % ~ -12 dB
+
+x = [A1*ones(N*nFramesSeg,1);
+     A2*ones(N*nFramesSeg,1);
+     A1*ones(N*nFramesSeg,1)];
+
+X = reshape(x,N,[]);
+
+ENV = env_mono_sys;
+ENV.N  = N;
+ENV.Fs = Fs;
+
+GC = gc_sys;
+GC.N  = N;
+
+ARF = arf_sys;
+ARF.N  = N;
+ARF.Fs = Fs;
+attack  = 0.005;   % cierre rápido
+release = 0.010;   % apertura también rápida
+
+MAP = map_sys;
+MAP.bypass = 0;
+MAP.Mode = 3;
+MAP.OutMin = -80;
+MAP.OutMax = 0;
+MAP.InMin = -50;
+MAP.InMax = -12;
+
+nF = size(X,2);
+
+Lenv = zeros(N,nF);
+G0   = zeros(N,nF);
+Garf = zeros(N,nF);
+Gmap = zeros(N,nF);
+
+for k = 1:nF
+    Lenv(:,k) = step(ENV, X(:,k), 2);
+    Gmap(:,k) = step(MAP, Lenv(:,k), InMin, InMax, );
+    %G0(:,k)   = step(GC,  Lenv(:,k), -24, 4, 0, 0);
+    Garf(:,k) = step(ARF, Gmap(:,k), attack, release);
+end
+minGarf = min(Garf(:));
+maxGarf = max(Garf(:));
+
+minGmap = min(Gmap(:));
+maxGmap = max(Gmap(:));
+
+disp([minGarf maxGarf])
+disp([minGmap maxGmap])
+
+t = (0:numel(G0)-1)/Fs;
+
+figure; plot(t, Lenv(:)); grid on; title('ENV');
+%figure; plot(t, G0(:));   grid on; title('GC instantáneo (dB)');
+figure; plot(t, Gmap(:)); grid on; title('MAP');
+figure; plot(t, Garf(:)); grid on; title('ARF suavizado (dB)');

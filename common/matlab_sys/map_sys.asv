@@ -1,0 +1,124 @@
+classdef map_sys < matlab.System
+%#codegen
+
+  properties(Nontunable)
+    bypass (1,1) uint8 = 0;
+  end
+
+  properties
+    Mode   (1,1) uint8  = uint8(0);
+    Gain   (1,1) double = 1.0;
+    Offset (1,1) double = 0.0;
+    FloorLin (1,1) double = 1e-6;
+    Threshold (1,1) double = -45.0;
+    Slope     (1,1) double = 1.0;
+  end
+
+  methods (Access = protected)
+
+    function y = stepImpl(obj, u, inMin, inMax, outMin, outMax)
+
+      x = double(u);
+      y = zeros(size(x));
+
+      if obj.bypass ~= 0
+        y = x;
+        return;
+      end
+
+      switch obj.Mode
+
+        case 0  % bypass
+          y = x;
+
+        case 1  % affine
+          y = obj.Gain .* x + obj.Offset;
+
+        case 2  % invert_affine
+          y = obj.Offset - obj.Gain .* x;
+
+        case 3  % normalize [inMin,inMax] -> [outMin,outMax]
+          den = double(inMax) - double(inMin);
+          if abs(den) < eps
+            y = double(outMin) * ones(size(x));
+          else
+            t = (x - double(inMin)) ./ den;
+            y = double(outMin) + t .* (double(outMax) - double(outMin));
+          end
+          y = local_clip(y, min(double(outMin),double(outMax)), ...
+                            max(double(outMin),double(outMax)));
+
+        case 4  % clip
+          y = local_clip(x, double(outMin), double(outMax));
+
+        case 5  % db_to_lin
+          y = 10.^(x ./ 20.0);
+
+        case 6  % lin_to_db
+          y = 20.0 .* log10(max(x, obj.FloorLin));
+
+        case 7  % vocoder_env_db con threshold+slope
+          e = max(x - obj.Threshold, 0);
+          y = double(outMin) + obj.Slope .* e;
+          y = local_clip(y, double(outMin), double(outMax));
+
+        case 8  % remapeo dB->dB
+          den = double(inMax) - double(inMin);
+          if abs(den) < eps
+            y = double(outMax) * ones(size(x));
+          else
+            t = (x - double(inMin)) ./ den;
+            y = double(outMin) + t .* (double(outMax) - double(outMin));
+          end
+          y = local_clip(y, min(double(outMin),double(outMax)), ...
+                            max(double(outMin),double(outMax)));
+
+        otherwise
+          y = x;
+      end
+    end
+
+    function validateInputsImpl(~, u, inMin, inMax, outMin, outMax)
+  if ~isnumeric(u) || ~isreal(u)
+    error('map_sys:Input','u must be numeric and real.');
+  end
+
+  validateattributes(inMin,  {'numeric'}, {'real','finite','nonempty'});
+  validateattributes(inMax,  {'numeric'}, {'real','finite','nonempty'});
+  validateattributes(outMin, {'numeric'}, {'real','finite','nonempty'});
+  validateattributes(outMax, {'numeric'}, {'real','finite','nonempty'});
+end
+
+    function num = getNumInputsImpl(~)
+      num = 5;
+    end
+
+    function num = getNumOutputsImpl(~)
+      num = 1;
+    end
+
+    function out = getOutputSizeImpl(obj)
+      out = propagatedInputSize(obj,1);
+    end
+
+    function out = getOutputDataTypeImpl(~)
+      out = 'double';
+    end
+
+    function out = isOutputComplexImpl(~)
+      out = false;
+    end
+
+    function out = isOutputFixedSizeImpl(~)
+      out = true;
+    end
+
+    function flag = supportsMultipleInstanceImpl(~)
+      flag = true;
+    end
+  end
+end
+
+function y = local_clip(x, xmin, xmax)
+  y = min(max(x, xmin), xmax);
+end

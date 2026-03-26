@@ -1,0 +1,16 @@
+-DPARAM_STRUCT_TYPE=P_phaser_T
+-DPARAM_STRUCT_VAR=phaser_P
+-DPARAM_P1_LABEL="Depth"
+-DPARAM_P1_LVALUE=phaser_P.Depth_rt
+-DPARAM_P2_LABEL="Feedback"
+-DPARAM_P2_LVALUE=phaser_P.Feedback_rt
+-DPARAM_P3_LABEL="Freq"
+-DPARAM_P3_LVALUE=phaser_P.Freq_rt
+-DPARAM_P4_LABEL="Time"
+-DPARAM_P4_LVALUE=phaser_P.Time_rt
+-DPARAM_P5_LABEL="Dry"
+-DPARAM_P5_LVALUE=phaser_P.Dry_rt
+-DPARAM_P6_LABEL="Wet"
+-DPARAM_P6_LVALUE=phaser_P.Wet_rt
+-DPARAM_P7_LABEL="Repeats"
+-DPARAM_P7_LVALUE=phaser_P.Repeats_rt

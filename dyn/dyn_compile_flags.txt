@@ -1,0 +1,16 @@
+-DPARAM_STRUCT_TYPE=P_dyn_T
+-DPARAM_STRUCT_VAR=dyn_P
+-DPARAM_P1_LABEL="Threshold"
+-DPARAM_P1_LVALUE=dyn_P.Threshold_rt
+-DPARAM_P2_LABEL="Ratio"
+-DPARAM_P2_LVALUE=dyn_P.Ratio_rt
+-DPARAM_P3_LABEL="Knee"
+-DPARAM_P3_LVALUE=dyn_P.Knee_rt
+-DPARAM_P4_LABEL="Makeup"
+-DPARAM_P4_LVALUE=dyn_P.Makeup_rt
+-DPARAM_P5_LABEL="Attack"
+-DPARAM_P5_LVALUE=dyn_P.Attack_rt
+-DPARAM_P6_LABEL="Release"
+-DPARAM_P6_LVALUE=dyn_P.Release_rt
+-DPARAM_P7_LABEL="Mix"
+-DPARAM_P7_LVALUE=dyn_P.Mix_rt

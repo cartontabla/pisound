@@ -1,0 +1,20 @@
+-DPARAM_STRUCT_TYPE=P_eqgraph_T
+-DPARAM_STRUCT_VAR=eqgraph_P
+# Ganancias por etapa (ejemplos)
+-DPARAM_P1_LABEL="G1"
+-DPARAM_P1_LVALUE=eqgraph_P.Gain1_rt
+-DPARAM_P2_LABEL="G2"
+-DPARAM_P2_LVALUE=eqgraph_P.Gain2_rt
+-DPARAM_P3_LABEL="G3"
+-DPARAM_P3_LVALUE=eqgraph_P.Gain3_rt
+-DPARAM_P4_LABEL="G4"
+-DPARAM_P4_LVALUE=eqgraph_P.Gain4_rt
+-DPARAM_P5_LABEL="G5"
+-DPARAM_P5_LVALUE=eqgraph_P.Gain5_rt
+-DPARAM_P6_LABEL="G6"
+-DPARAM_P6_LVALUE=eqgraph_P.Gain6_rt
+-DPARAM_P7_LABEL="G7"
+-DPARAM_P7_LVALUE=eqgraph_P.Gain7_rt
+# Ganancia final
+-DPARAM_P8_LABEL="Gain"
+-DPARAM_P8_LVALUE=eqgraph_P.Gain_rt

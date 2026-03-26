@@ -1,0 +1,12 @@
+/* Tema Básico Transparente */
+/* Permite que la imagen de fondo del HTML sea la protagonista */
+
+.mod-plugin-body {
+    background-color: transparent;
+}
+
+/* Estilo para etiquetas de texto (si se usaran en HTML, aunque recomendamos imagen) */
+.mod-label {
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+}

@@ -1,0 +1,85 @@
+/* ============================================================
+   AMP (MODEP/MOD-UI) - stylesheet-amp.css
+   ============================================================ */
+
+.amp-icon{
+  position: relative;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* --- KNOB: imagen filmstrip --- */
+.amp-icon .amp-knob{
+  background-image: url(/resources/knobs/boxy/black.png{{{ns}}});
+  background-repeat: no-repeat;
+  background-size: auto var(--knob-size);
+
+  /* NO pongas background-position con !important */
+  background-position: 0 0;  (si lo pones, que sea SIN !important) 
+}
+
+/* --- JACKS: solo capa --- */
+.amp-icon .amp-inL.mod-input,
+.amp-icon .amp-inR.mod-input,
+.amp-icon .amp-outL.mod-output,
+.amp-icon .amp-outR.mod-output{
+  z-index: 60 !important;
+}
+
+/* --- FOOTSWITCH (sprite vertical: 2 frames apilados) --- */
+.amp-icon .amp-footswitch-hit[mod-role="bypass"]{
+  z-index: 90 !important;
+  cursor: pointer !important;
+
+  background-image: url(/resources/pedals/footswitch.png{{{ns}}}) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 200% !important;  /* 1 frame ancho, 2 frames alto */
+  background-position: 0 100% !important; /* OFF por defecto (frame inferior) */
+}
+
+/* ON = frame superior */
+.amp-icon .amp-footswitch-hit.on{
+  background-position: 0 0 !important;
+}
+
+/* --- LED “realista” --- */
+.amp-icon .amp-led[mod-role="bypass-light"]{
+  border-radius: 50% !important;
+  z-index: 95 !important;
+  pointer-events: none !important;
+
+  /* apagado */
+  background: radial-gradient(circle at 30% 30%, #555 0%, #222 55%, #000 100%) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,0.15),
+    inset 0 -1px 2px rgba(0,0,0,0.6);
+}
+
+/* encendido */
+.amp-icon .amp-led[mod-role="bypass-light"].on{
+  background: radial-gradient(circle at 30% 30%, #d7ffd7 0%, #38ff38 35%, #00a800 70%, #004d00 100%) !important;
+  box-shadow:
+    0 0 6px rgba(0,255,0,0.8),
+    0 0 14px rgba(0,255,0,0.55),
+    inset 0 1px 2px rgba(255,255,255,0.25),
+    inset 0 -1px 2px rgba(0,0,0,0.4);
+}
+
+/* si MOD añade .off explícito */
+.amp-icon .amp-led[mod-role="bypass-light"].off{
+  opacity: 0.85 !important;
+}
+
+/* (Opcional) label Gain si vuelves a ponerla en HTML */
+.amp-icon .amp-gain-label{
+  position:absolute !important;
+  left: calc(var(--knob-x) + var(--knob-size)/2) !important;
+  top:  calc(var(--knob-y) + var(--knob-size) + 8px) !important;
+  transform: translateX(-50%) !important;
+  z-index: 200 !important;
+  color: #fff !important;
+  font: 600 14px/1 sans-serif !important;
+  pointer-events: none !important;
+  background: rgba(0,0,0,0.6) !important;
+  padding: 2px 6px !important;
+}

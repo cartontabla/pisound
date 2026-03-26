@@ -1,0 +1,10 @@
+-DPARAM_STRUCT_TYPE=P_filters_T
+-DPARAM_STRUCT_VAR=filters_P
+-DPARAM_P1_LABEL="Type"
+-DPARAM_P1_LVALUE=filters_P.FilterType_rt
+-DPARAM_P2_LABEL="Freq"
+-DPARAM_P2_LVALUE=filters_P.Freq_rt
+-DPARAM_P3_LABEL="Q"
+-DPARAM_P3_LVALUE=filters_P.Q_rt
+-DPARAM_P4_LABEL="Gain"
+-DPARAM_P4_LVALUE=filters_P.Gain_rt

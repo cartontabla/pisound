@@ -1,0 +1,20 @@
+@prefix modgui: <http://moddevices.com/ns/modgui#> .
+@prefix lv2:    <http://lv2plug.in/ns/lv2core#> .
+
+<http://pisound.org/plugins/amp>
+    modgui:gui [
+        a modgui:GUI ;
+        modgui:resourcesDirectory <modgui/> ;
+        modgui:iconTemplate <modgui/icon-amp.html> ;
+        modgui:template     <modgui/amp.html> ;
+        modgui:stylesheet <modgui/stylesheet-amp.css> ;
+        modgui:screenshot <modgui/screenshot.png> ;
+        modgui:thumbnail <modgui/thumbnail.png> ;
+
+        modgui:brand "G" ;
+        modgui:label "Amp" ;
+
+        modgui:port
+            [ lv2:index 0 ; lv2:symbol "gain"   ; lv2:name "Gain"   ] ;
+    ] .
+

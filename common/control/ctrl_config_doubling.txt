@@ -1,0 +1,25 @@
+# ctrl_config_doubling.txt
+# Control mapping configuration for Doubling effect
+#
+# Format: transport|source|min_val|max_val|ramp_ms|param_name
+#
+# transport: midi or osc
+# source: 
+#   - For MIDI: cc:CC_NUM (e.g., cc:44)
+#   - For OSC: /path/to/param
+# min_val, max_val: parameter range
+# ramp_ms: smoothing time (0 = immediate)
+# param_name: descriptive name
+
+# MIDI Control Change mappings
+# Using Oxygen 25 default CC assignments
+midi|cc:74|0|100|50|delay_ms
+midi|cc:71|0|1|100|depth
+midi|cc:52|0|1|100|spread
+midi|cc:64|0|1|0|bypass
+
+# OSC mappings (same params, accessible via UDP port 9000)
+osc|/doubling/delay_ms|0|100|50|delay_ms
+osc|/doubling/depth|0|1|100|depth
+osc|/doubling/spread|0|1|100|spread
+osc|/doubling/bypass|0|1|0|bypass

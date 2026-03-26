@@ -1,0 +1,10 @@
+-DPARAM_STRUCT_TYPE=P_tremolo_T
+-DPARAM_STRUCT_VAR=tremolo_P
+-DPARAM_P1_LABEL="Rate"
+-DPARAM_P1_LVALUE=tremolo_P.Rate_rt
+-DPARAM_P2_LABEL="Depth"
+-DPARAM_P2_LVALUE=tremolo_P.Depth_rt
+-DPARAM_P3_LABEL="iPhase"
+-DPARAM_P3_LVALUE=tremolo_P.iPhase_rt
+-DPARAM_P4_LABEL="WaveSel"
+-DPARAM_P4_LVALUE=tremolo_P.WaveSel_rt
