@@ -225,16 +225,36 @@ gcc -o test_ctrl test_ctrl_arch.c ctrl_*.c midi_*.c -lm
 
 ## Implemented
 
-| Feature | Status |
-|---------|--------|
-| MIDI CC via ALSA sequencer | ✓ done |
-| OSC float over UDP (RX) | ✓ done |
-| Multi-source per parameter (MIDI+OSC same slot) | ✓ done |
-| Click-free ramping | ✓ done |
-| OSC TX (Pi → controller feedback) | pending |
-| Presets / scene recall | pending |
+| Transport | Feature | Status |
+|-----------|---------|--------|
+| USB MIDI | MIDI CC via ALSA sequencer (Oxygen 25) | ✓ done |
+| UDP/WiFi | OSC float over UDP (RX) — TouchOSC verified | ✓ done |
+| Both | Multi-source per parameter (MIDI+OSC same slot) | ✓ done |
+| Both | Click-free ramping | ✓ done |
+| BLE MIDI | CME WIDI Core bridge script (`ble_midi_bridge.py`) | ⚠ partial |
+| Any | OSC TX (Pi → controller feedback) | pending |
+| Any | Presets / scene recall | pending |
+
+### BLE MIDI status (CME WIDI Core + H4MIDI WC)
+
+Hardware confirmed working at radio level:
+- WIDI Core (`F0:8C:F3:8B:63:04`) visible and advertising (verified with `hcitool lescan`)
+- LE link establishes momentarily (`btmgmt` reports `connected`)
+- Bridge script `ble_midi_bridge.py` written and ready (uses BlueZ D-Bus + `snd-virmidi`)
+
+Blocking issue — BlueZ bonding incompatibility:
+- Kernel 6.6.20 on Patchbox OS does **not** include `snd-seq-bluetooth` module
+- BlueZ 5.66 initiates bonding on every `Connect()` call; WIDI Core rejects it (status 0x0a)
+- Workaround attempts exhausted: `bondable off`, `JustWorksRepairing`, `gatttool`, raw `hcitool lecc`, `btmgmt pair`
+- WirePlumber auto-connect succeeds briefly but disconnects (no A2DP profile)
+
+Resolution path: either kernel upgrade with `snd-seq-bluetooth`, or a BlueZ version that supports GATT connection without forced bonding.
 
 ## Future Extensions
+
+### BLE MIDI (complete)
+1. Upgrade kernel to one that includes `snd-seq-bluetooth` module, OR
+2. Update BlueZ to handle GATT without bonding for trusted devices
 
 ### Bidirectional TX
 - `control_process_tx()` hook exists — connect `ctrl_out_get()` to `osc_send_float()`
@@ -257,6 +277,7 @@ common/control/
 ├── udp_io.h/c               # UDP RX bind + TX sendto
 ├── control.h/c              # Integration: init/rx/tx/shutdown
 ├── ctrl_config_doubling.txt # Config example (doubling project)
+├── ble_midi_bridge.py       # BLE MIDI → ALSA bridge (snd-virmidi)
 ├── test_ctrl_arch.c         # Unit test
 └── README.md                # This file
 ```
