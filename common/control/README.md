@@ -227,37 +227,46 @@ gcc -o test_ctrl test_ctrl_arch.c ctrl_*.c midi_*.c -lm
 
 | Transport | Feature | Status |
 |-----------|---------|--------|
-| USB MIDI | MIDI CC via ALSA sequencer (Oxygen 25) | ✓ done |
-| UDP/WiFi | OSC float over UDP (RX) — TouchOSC verified | ✓ done |
+| USB MIDI | MIDI CC via ALSA sequencer (Korg padKONTROL, Oxygen 25) | ✓ done |
+| DIN MIDI IN | via pisound HAT MIDI IN connector | ✓ done (cable verified) |
+| UDP/Ethernet | OSC RX over UDP — TouchOSC / macOS verified | ✓ done |
+| UDP/WiFi | OSC RX over UDP — MacBook WiFi verified | ✓ done |
+| OSC TX | `ctrl_out` → OSC TX → Mac (multi-destination) | ✓ done |
 | Both | Multi-source per parameter (MIDI+OSC same slot) | ✓ done |
 | Both | Click-free ramping | ✓ done |
-| BLE MIDI | CME WIDI Core bridge script (`ble_midi_bridge.py`) | ⚠ partial |
-| Any | OSC TX (Pi → controller feedback) | pending |
-| Any | Presets / scene recall | pending |
+| Runtime config | `ctrl_tx.conf` — multiple `ip=` lines, one `port=` | ✓ done |
+| BLE MIDI | TP-Link UB500 (RTL8761B) dongle | ⚠ pending dongle |
+| Any | Presets / scene recall | future |
 
-### BLE MIDI status (CME WIDI Core + H4MIDI WC)
+### OSC TX status
 
-Hardware confirmed working at radio level:
-- WIDI Core (`F0:8C:F3:8B:63:04`) visible and advertising (verified with `hcitool lescan`)
-- LE link establishes momentarily (`btmgmt` reports `connected`)
-- Bridge script `ble_midi_bridge.py` written and ready (uses BlueZ D-Bus + `snd-virmidi`)
+`control_process_tx()` implemented: sends `g_ctrl_out_vals[]` via `osc_send_float()` at ~30 Hz
+(throttled every 12 frames at 48 kHz / 128 samples ≈ 32 ms).
 
-Blocking issue — BlueZ bonding incompatibility:
-- Kernel 6.6.20 on Patchbox OS does **not** include `snd-seq-bluetooth` module
-- BlueZ 5.66 initiates bonding on every `Connect()` call; WIDI Core rejects it (status 0x0a)
-- Workaround attempts exhausted: `bondable off`, `JustWorksRepairing`, `gatttool`, raw `hcitool lecc`, `btmgmt pair`
-- WirePlumber auto-connect succeeds briefly but disconnects (no A2DP profile)
+TX destinations loaded at runtime from `ctrl_tx.conf` (no recompile needed):
+```
+ip=192.168.0.37   # Mac Studio (Ethernet)
+ip=192.168.0.28   # MacBook (WiFi)
+port=9000
+```
 
-Resolution path: either kernel upgrade with `snd-seq-bluetooth`, or a BlueZ version that supports GATT connection without forced bonding.
+Multi-destination support in `udp_io.c` (`UDP_MAX_DESTS=8`): first IP initialises the socket
+(`osc_proto_init` → `udp_io_init`), additional IPs added via `udp_io_add_dest()`.
+Verified with `strace` confirming `sendto` to both IPs.
+
+### BLE MIDI status
+
+Blocked by BCM4345C0 LL overhead on the Pi 5's built-in Bluetooth.
+TP-Link UB500 (RTL8761B) dongle ordered — pending arrival and testing.
 
 ## Future Extensions
 
 ### BLE MIDI (complete)
-1. Upgrade kernel to one that includes `snd-seq-bluetooth` module, OR
-2. Update BlueZ to handle GATT without bonding for trusted devices
+1. Verify `ble_midi_bridge.py` (gattlib path) with WIDI Core powered on, OR
+2. Compile BlueZ from source with `--enable-midi` + patch to skip bonding for trusted devices
 
 ### Bidirectional TX
-- `control_process_tx()` hook exists — connect `ctrl_out_get()` to `osc_send_float()`
+- `control_process_tx()` implemented ✓ — `ctrl_out_get()` → `osc_send_float()` at ~30 Hz
 - Enables TouchOSC displays, LED feedback on controllers
 
 ### Presets

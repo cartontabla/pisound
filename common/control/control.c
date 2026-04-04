@@ -3,16 +3,18 @@
  *
  * Called each audio frame from custom_main.c via ENABLE_CONTROL hooks:
  *   control_process_rx()  — MIDI in  → g_ctrl_in_vals[]
- *   control_process_tx()  — g_ctrl_out_vals[] → MIDI/OSC out (future)
+ *   control_process_tx()  — g_ctrl_out_vals[] → MIDI/OSC out
  *
  * Compile-time configuration (set via -D flags in compile_flags.txt):
- *   CTRL_CONFIG_FILE   path to mapping config (e.g. "../common/control/ctrl_config_doubling.txt")
- *   CTRL_MIDI_PORT     ALSA port name or "client:port" (e.g. "Oxygen 25:0")
- *                      Empty string "" → port created but not auto-connected;
- *                      connect manually: aconnect <oxygen_port> pisound-control:in
- *   CTRL_NUM_PARAMS    number of parameters (default 20)
- *   CTRL_SAMPLE_RATE   audio sample rate in Hz (default 48000)
- *   CTRL_FRAME_SIZE    audio frame size in samples (default 128)
+ *   CTRL_CONFIG_FILE    path to mapping config (e.g. "../common/control/ctrl_config_doubling.txt")
+ *   CTRL_MIDI_PORT      ALSA port name or "client:port" (e.g. "Oxygen 25:0")
+ *   CTRL_NUM_PARAMS     number of parameters (default 20)
+ *   CTRL_SAMPLE_RATE    audio sample rate in Hz (default 48000)
+ *   CTRL_FRAME_SIZE     audio frame size in samples (default 128)
+ *   CTRL_TX_CONFIG_FILE path to OSC TX config file (default "ctrl_tx.conf")
+ *                       Format: key=value, one per line
+ *                         ip=192.168.0.31
+ *                         port=9000
  */
 
 #include "control.h"
@@ -26,14 +28,21 @@
 
 #ifdef ENABLE_OSC
 #include "osc_proto.h"
+#include "udp_io.h"
 #endif
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 /* ---- Compile-time defaults ---------------------------------------- */
 
 #ifndef CTRL_CONFIG_FILE
 #define CTRL_CONFIG_FILE "ctrl_config.txt"
+#endif
+
+#ifndef CTRL_TX_CONFIG_FILE
+#define CTRL_TX_CONFIG_FILE "ctrl_tx.conf"
 #endif
 
 #ifndef CTRL_MIDI_PORT
@@ -44,6 +53,10 @@
 #define CTRL_NUM_PARAMS 20
 #endif
 
+#ifndef CTRL_OSC_TX_NUM
+#define CTRL_OSC_TX_NUM 4
+#endif
+
 #ifndef CTRL_SAMPLE_RATE
 #define CTRL_SAMPLE_RATE 48000
 #endif
@@ -51,6 +64,45 @@
 #ifndef CTRL_FRAME_SIZE
 #define CTRL_FRAME_SIZE 128
 #endif
+
+static const char *g_tx_paths[CTRL_OSC_TX_NUM] = {
+    "/doubling/out/delay_ms",
+    "/doubling/out/depth",
+    "/doubling/out/spread",
+    "/doubling/out/bypass",
+};
+
+/* ---- OSC TX config (runtime) -------------------------------------- */
+
+static int  g_osc_tx_port    = 9000;
+
+/* ip entries accumulate; port applies to all */
+static char  g_osc_tx_ips[8][64];
+static int   g_osc_tx_nips = 0;
+
+static void load_tx_config(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        fprintf(stderr, "control: no TX config '%s', using defaults\n", path);
+        return;
+    }
+    char line[128];
+    while (fgets(line, sizeof(line), f)) {
+        char *eq = strchr(line, '=');
+        if (!eq) continue;
+        *eq = '\0';
+        char *key = line;
+        char *val = eq + 1;
+        val[strcspn(val, "\r\n")] = '\0';
+        if (strcmp(key, "ip") == 0 && g_osc_tx_nips < 8) {
+            snprintf(g_osc_tx_ips[g_osc_tx_nips++], 64, "%s", val);
+        } else if (strcmp(key, "port") == 0) {
+            g_osc_tx_port = atoi(val);
+        }
+    }
+    fclose(f);
+}
 
 /* ---- Module state -------------------------------------------------- */
 
@@ -82,6 +134,12 @@ void control_init(void)
     }
 
 #ifdef ENABLE_OSC
+    load_tx_config(CTRL_TX_CONFIG_FILE);
+    if (g_osc_tx_nips > 0) {
+        osc_proto_init(g_osc_tx_ips[0], g_osc_tx_port);
+        for (int i = 1; i < g_osc_tx_nips; i++)
+            udp_io_add_dest(g_osc_tx_ips[i], g_osc_tx_port);
+    }
     osc_server_start(9000);
 #endif
 }
@@ -157,8 +215,16 @@ void control_process_rx(void)
 
 void control_process_tx(void)
 {
-    /* TX: read g_ctrl_out_vals[] and send back via MIDI/OSC — future work */
-    (void)ctrl_out_get;
+#ifdef ENABLE_OSC
+    /* Throttle to ~30 Hz (128/48000 ≈ 2.67ms per frame, every 12 frames ≈ 32ms) */
+    static int s_frame = 0;
+    if (++s_frame < 12) return;
+    s_frame = 0;
+
+    for (int i = 0; i < CTRL_OSC_TX_NUM; i++) {
+        osc_send_float(g_tx_paths[i], ctrl_out_get((unsigned int)i));
+    }
+#endif
 }
 
 /* -------------------------------------------------------------------- */

@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.6
+ * Model version                  : 1.8
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Thu Mar 26 20:38:11 2026
+ * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
@@ -100,6 +100,36 @@ P_doubling_T doubling_P = {
    * Referenced by: '<Root>/Gain_Out_R'
    */
   2.147483647E+9,
+
+  /* Computed Parameter: SFunction1_P1_Size
+   * Referenced by: '<Root>/S-Function1'
+   */
+  { 1.0, 1.0 },
+
+  /* Expression: 48000
+   * Referenced by: '<Root>/S-Function1'
+   */
+  48000.0,
+
+  /* Computed Parameter: SFunction1_P2_Size
+   * Referenced by: '<Root>/S-Function1'
+   */
+  { 1.0, 1.0 },
+
+  /* Expression: 128
+   * Referenced by: '<Root>/S-Function1'
+   */
+  128.0,
+
+  /* Computed Parameter: SFunction1_P3_Size
+   * Referenced by: '<Root>/S-Function1'
+   */
+  { 1.0, 1.0 },
+
+  /* Expression: 4
+   * Referenced by: '<Root>/S-Function1'
+   */
+  4.0,
 
   /* Computed Parameter: pisound_out_P1_Size
    * Referenced by: '<Root>/pisound_out'

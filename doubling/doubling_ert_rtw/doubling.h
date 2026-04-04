@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.6
+ * Model version                  : 1.8
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Thu Mar 26 20:38:11 2026
+ * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
@@ -179,6 +179,24 @@ struct P_doubling_T_ {
   real_T Gain_Out_R_Gain;              /* Expression: 2147483647
                                         * Referenced by: '<Root>/Gain_Out_R'
                                         */
+  real_T SFunction1_P1_Size[2];        /* Computed Parameter: SFunction1_P1_Size
+                                        * Referenced by: '<Root>/S-Function1'
+                                        */
+  real_T SFunction1_P1;                /* Expression: 48000
+                                        * Referenced by: '<Root>/S-Function1'
+                                        */
+  real_T SFunction1_P2_Size[2];        /* Computed Parameter: SFunction1_P2_Size
+                                        * Referenced by: '<Root>/S-Function1'
+                                        */
+  real_T SFunction1_P2;                /* Expression: 128
+                                        * Referenced by: '<Root>/S-Function1'
+                                        */
+  real_T SFunction1_P3_Size[2];        /* Computed Parameter: SFunction1_P3_Size
+                                        * Referenced by: '<Root>/S-Function1'
+                                        */
+  real_T SFunction1_P3;                /* Expression: 4
+                                        * Referenced by: '<Root>/S-Function1'
+                                        */
   real_T pisound_out_P1_Size[2];      /* Computed Parameter: pisound_out_P1_Size
                                        * Referenced by: '<Root>/pisound_out'
                                        */
@@ -219,15 +237,15 @@ struct tag_RTM_doubling_T {
   struct {
     RTWSfcnInfo sfcnInfo;
     time_T *taskTimePtrs[1];
-    SimStruct childSFunctions[3];
-    SimStruct *childSFunctionPtrs[3];
-    struct _ssBlkInfo2 blkInfo2[3];
-    struct _ssSFcnModelMethods2 methods2[3];
-    struct _ssSFcnModelMethods3 methods3[3];
-    struct _ssSFcnModelMethods4 methods4[3];
-    struct _ssStatesInfo2 statesInfo2[3];
-    ssPeriodicStatesInfo periodicStatesInfo[3];
-    struct _ssPortInfo2 inputOutputPortInfo2[3];
+    SimStruct childSFunctions[4];
+    SimStruct *childSFunctionPtrs[4];
+    struct _ssBlkInfo2 blkInfo2[4];
+    struct _ssSFcnModelMethods2 methods2[4];
+    struct _ssSFcnModelMethods3 methods3[4];
+    struct _ssSFcnModelMethods4 methods4[4];
+    struct _ssStatesInfo2 statesInfo2[4];
+    ssPeriodicStatesInfo periodicStatesInfo[4];
+    struct _ssPortInfo2 inputOutputPortInfo2[4];
     struct {
       time_T sfcnPeriod[1];
       time_T sfcnOffset[1];
@@ -254,6 +272,21 @@ struct tag_RTM_doubling_T {
       time_T sfcnPeriod[1];
       time_T sfcnOffset[1];
       int_T sfcnTsMap[1];
+      struct _ssPortInputs inputPortInfo[4];
+      struct _ssInPortUnit inputPortUnits[4];
+      struct _ssInPortCoSimAttribute inputPortCoSimAttribute[4];
+      real_T const *UPtrs0[1];
+      real_T const *UPtrs1[1];
+      real_T const *UPtrs2[1];
+      real_T const *UPtrs3[1];
+      uint_T attribs[3];
+      mxArray *params[3];
+    } Sfcn2;
+
+    struct {
+      time_T sfcnPeriod[1];
+      time_T sfcnOffset[1];
+      int_T sfcnTsMap[1];
       struct _ssPortInputs inputPortInfo[2];
       struct _ssInPortUnit inputPortUnits[2];
       struct _ssInPortCoSimAttribute inputPortCoSimAttribute[2];
@@ -261,7 +294,7 @@ struct tag_RTM_doubling_T {
       real_T const *UPtrs1[128];
       uint_T attribs[3];
       mxArray *params[3];
-    } Sfcn2;
+    } Sfcn3;
   } NonInlinedSFcns;
 
   boolean_T zCCacheNeedsReset;

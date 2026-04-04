@@ -6,44 +6,57 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-static int udp_sock    = -1;   /* TX socket */
-static int udp_rx_sock = -1;   /* RX socket */
-static struct sockaddr_in udp_addr;
-static int udp_ready = 0;
+#define UDP_MAX_DESTS 8
+
+static int udp_sock                          = -1;
+static int udp_rx_sock                       = -1;
+static struct sockaddr_in udp_dests[UDP_MAX_DESTS];
+static int udp_ndests                        = 0;
+static int udp_ready                         = 0;
+
+static void _add_dest(const char *ip, int port)
+{
+    if (udp_ndests >= UDP_MAX_DESTS) {
+        fprintf(stderr, "udp_io: max destinations (%d) reached\n", UDP_MAX_DESTS);
+        return;
+    }
+    struct sockaddr_in *a = &udp_dests[udp_ndests++];
+    memset(a, 0, sizeof(*a));
+    a->sin_family      = AF_INET;
+    a->sin_port        = htons((uint16_t)port);
+    a->sin_addr.s_addr = inet_addr(ip);
+    printf("UDP dest[%d] ip=%s port=%d\n", udp_ndests - 1, ip, port);
+}
 
 void udp_io_init(const char *ip, int port)
 {
-    if (udp_ready) {
-        return;
-    }
+    if (udp_ready) return;
 
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (udp_sock < 0) {
-        perror("socket");
-        return;
-    }
-
-    memset(&udp_addr, 0, sizeof(udp_addr));
-    udp_addr.sin_family = AF_INET;
-    udp_addr.sin_port = htons(port);
-    udp_addr.sin_addr.s_addr = inet_addr(ip);
+    if (udp_sock < 0) { perror("socket"); return; }
 
     udp_ready = 1;
-
     printf("UDP INIT ip=%s port=%d sock=%d\n", ip, port, udp_sock);
+    _add_dest(ip, port);
+}
+
+void udp_io_add_dest(const char *ip, int port)
+{
+    if (!udp_ready) {
+        fprintf(stderr, "udp_io: call udp_io_init before udp_io_add_dest\n");
+        return;
+    }
+    _add_dest(ip, port);
 }
 
 void udp_io_send(const void *data, int len)
 {
-	//printf("UDP SEND len=%d\n", len);
-	fflush(stdout);
-	
-    if (!udp_ready || udp_sock < 0) {
-        return;
-    }
+    if (!udp_ready || udp_sock < 0) return;
 
-    sendto(udp_sock, data, len, 0,
-           (struct sockaddr *)&udp_addr, sizeof(udp_addr));
+    for (int i = 0; i < udp_ndests; i++) {
+        sendto(udp_sock, data, len, 0,
+               (struct sockaddr *)&udp_dests[i], sizeof(udp_dests[i]));
+    }
 }
 
 void udp_io_close(void)

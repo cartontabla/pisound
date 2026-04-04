@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.6
+ * Model version                  : 1.8
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Thu Mar 26 20:38:11 2026
+ * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
@@ -113,11 +113,19 @@ void doubling_step(void)
       (int32_T)(uint32_T)tmp_0;
   }
 
+  /* S-Function (ctrl_out): '<Root>/S-Function1' */
+
+  /* Level2 S-Function Block: '<Root>/S-Function1' (ctrl_out) */
+  {
+    SimStruct *rts = doubling_M->childSfunctions[2];
+    sfcnOutputs(rts,0);
+  }
+
   /* S-Function (pisound_out): '<Root>/pisound_out' */
 
   /* Level2 S-Function Block: '<Root>/pisound_out' (pisound_out) */
   {
-    SimStruct *rts = doubling_M->childSfunctions[2];
+    SimStruct *rts = doubling_M->childSfunctions[3];
     sfcnOutputs(rts,0);
   }
 
@@ -195,12 +203,12 @@ void doubling_initialize(void)
     rtssSetSolverInfoPtr(sfcnInfo, &doubling_M->solverInfoPtr);
   }
 
-  doubling_M->Sizes.numSFcns = (3);
+  doubling_M->Sizes.numSFcns = (4);
 
   /* register each child */
   {
     (void) memset((void *)&doubling_M->NonInlinedSFcns.childSFunctions[0], 0,
-                  3*sizeof(SimStruct));
+                  4*sizeof(SimStruct));
     doubling_M->childSfunctions =
       (&doubling_M->NonInlinedSFcns.childSFunctionPtrs[0]);
     doubling_M->childSfunctions[0] =
@@ -209,6 +217,8 @@ void doubling_initialize(void)
       (&doubling_M->NonInlinedSFcns.childSFunctions[1]);
     doubling_M->childSfunctions[2] =
       (&doubling_M->NonInlinedSFcns.childSFunctions[2]);
+    doubling_M->childSfunctions[3] =
+      (&doubling_M->NonInlinedSFcns.childSFunctions[3]);
 
     /* Level2 S-Function Block: doubling/<Root>/S-Function (ctrl_in) */
     {
@@ -340,10 +350,10 @@ void doubling_initialize(void)
       ssSetNumNonsampledZCsAsInt(rts, 0);
 
       /* Update connectivity flags for each port */
-      _ssSetOutputPortConnected(rts, 0, 0);
+      _ssSetOutputPortConnected(rts, 0, 1);
       _ssSetOutputPortConnected(rts, 1, 1);
       _ssSetOutputPortConnected(rts, 2, 1);
-      _ssSetOutputPortConnected(rts, 3, 0);
+      _ssSetOutputPortConnected(rts, 3, 1);
       _ssSetOutputPortBeingMerged(rts, 0, 0);
       _ssSetOutputPortBeingMerged(rts, 1, 0);
       _ssSetOutputPortBeingMerged(rts, 2, 0);
@@ -472,7 +482,7 @@ void doubling_initialize(void)
       /* Update the BufferDstPort flags for each input port */
     }
 
-    /* Level2 S-Function Block: doubling/<Root>/pisound_out (pisound_out) */
+    /* Level2 S-Function Block: doubling/<Root>/S-Function1 (ctrl_out) */
     {
       SimStruct *rts = doubling_M->childSfunctions[2];
 
@@ -522,7 +532,7 @@ void doubling_initialize(void)
 
       /* inputs */
       {
-        _ssSetNumInputPorts(rts, 2);
+        _ssSetNumInputPorts(rts, 4);
         ssSetPortInfoForInputs(rts,
           &doubling_M->NonInlinedSFcns.Sfcn2.inputPortInfo[0]);
         ssSetPortInfoForInputs(rts,
@@ -531,15 +541,169 @@ void doubling_initialize(void)
           &doubling_M->NonInlinedSFcns.Sfcn2.inputPortUnits[0]);
         ssSetInputPortUnit(rts, 0, 0);
         ssSetInputPortUnit(rts, 1, 0);
+        ssSetInputPortUnit(rts, 2, 0);
+        ssSetInputPortUnit(rts, 3, 0);
         _ssSetPortInfo2ForInputCoSimAttribute(rts,
           &doubling_M->NonInlinedSFcns.Sfcn2.inputPortCoSimAttribute[0]);
+        ssSetInputPortIsContinuousQuantity(rts, 0, 0);
+        ssSetInputPortIsContinuousQuantity(rts, 1, 0);
+        ssSetInputPortIsContinuousQuantity(rts, 2, 0);
+        ssSetInputPortIsContinuousQuantity(rts, 3, 0);
+
+        /* port 0 */
+        {
+          real_T const **sfcnUPtrs = (real_T const **)
+            &doubling_M->NonInlinedSFcns.Sfcn2.UPtrs0;
+          sfcnUPtrs[0] = &doubling_B.SFunction_o1;
+          ssSetInputPortSignalPtrs(rts, 0, (InputPtrsType)&sfcnUPtrs[0]);
+          _ssSetInputPortNumDimensions(rts, 0, 1);
+          ssSetInputPortWidthAsInt(rts, 0, 1);
+        }
+
+        /* port 1 */
+        {
+          real_T const **sfcnUPtrs = (real_T const **)
+            &doubling_M->NonInlinedSFcns.Sfcn2.UPtrs1;
+          sfcnUPtrs[0] = &doubling_B.SFunction_o2;
+          ssSetInputPortSignalPtrs(rts, 1, (InputPtrsType)&sfcnUPtrs[0]);
+          _ssSetInputPortNumDimensions(rts, 1, 1);
+          ssSetInputPortWidthAsInt(rts, 1, 1);
+        }
+
+        /* port 2 */
+        {
+          real_T const **sfcnUPtrs = (real_T const **)
+            &doubling_M->NonInlinedSFcns.Sfcn2.UPtrs2;
+          sfcnUPtrs[0] = &doubling_B.SFunction_o3;
+          ssSetInputPortSignalPtrs(rts, 2, (InputPtrsType)&sfcnUPtrs[0]);
+          _ssSetInputPortNumDimensions(rts, 2, 1);
+          ssSetInputPortWidthAsInt(rts, 2, 1);
+        }
+
+        /* port 3 */
+        {
+          real_T const **sfcnUPtrs = (real_T const **)
+            &doubling_M->NonInlinedSFcns.Sfcn2.UPtrs3;
+          sfcnUPtrs[0] = &doubling_B.SFunction_o4;
+          ssSetInputPortSignalPtrs(rts, 3, (InputPtrsType)&sfcnUPtrs[0]);
+          _ssSetInputPortNumDimensions(rts, 3, 1);
+          ssSetInputPortWidthAsInt(rts, 3, 1);
+        }
+      }
+
+      /* path info */
+      ssSetModelName(rts, "S-Function1");
+      ssSetPath(rts, "doubling/S-Function1");
+      ssSetRTModel(rts,doubling_M);
+      ssSetParentSS(rts, (NULL));
+      ssSetRootSS(rts, rts);
+      ssSetVersion(rts, SIMSTRUCT_VERSION_LEVEL2);
+
+      /* parameters */
+      {
+        mxArray **sfcnParams = (mxArray **)
+          &doubling_M->NonInlinedSFcns.Sfcn2.params;
+        ssSetSFcnParamsCount(rts, 3);
+        ssSetSFcnParamsPtr(rts, &sfcnParams[0]);
+        ssSetSFcnParam(rts, 0, (mxArray*)doubling_P.SFunction1_P1_Size);
+        ssSetSFcnParam(rts, 1, (mxArray*)doubling_P.SFunction1_P2_Size);
+        ssSetSFcnParam(rts, 2, (mxArray*)doubling_P.SFunction1_P3_Size);
+      }
+
+      /* registration */
+      ctrl_out(rts);
+      sfcnInitializeSizes(rts);
+      sfcnInitializeSampleTimes(rts);
+
+      /* adjust sample time */
+      ssSetSampleTime(rts, 0, 0.0026666666666666666);
+      ssSetOffsetTime(rts, 0, 0.0);
+      sfcnTsMap[0] = 0;
+
+      /* set compiled values of dynamic vector attributes */
+      ssSetNumNonsampledZCsAsInt(rts, 0);
+
+      /* Update connectivity flags for each port */
+      _ssSetInputPortConnected(rts, 0, 1);
+      _ssSetInputPortConnected(rts, 1, 1);
+      _ssSetInputPortConnected(rts, 2, 1);
+      _ssSetInputPortConnected(rts, 3, 1);
+
+      /* Update the BufferDstPort flags for each input port */
+      ssSetInputPortBufferDstPort(rts, 0, -1);
+      ssSetInputPortBufferDstPort(rts, 1, -1);
+      ssSetInputPortBufferDstPort(rts, 2, -1);
+      ssSetInputPortBufferDstPort(rts, 3, -1);
+    }
+
+    /* Level2 S-Function Block: doubling/<Root>/pisound_out (pisound_out) */
+    {
+      SimStruct *rts = doubling_M->childSfunctions[3];
+
+      /* timing info */
+      time_T *sfcnPeriod = doubling_M->NonInlinedSFcns.Sfcn3.sfcnPeriod;
+      time_T *sfcnOffset = doubling_M->NonInlinedSFcns.Sfcn3.sfcnOffset;
+      int_T *sfcnTsMap = doubling_M->NonInlinedSFcns.Sfcn3.sfcnTsMap;
+      (void) memset((void*)sfcnPeriod, 0,
+                    sizeof(time_T)*1);
+      (void) memset((void*)sfcnOffset, 0,
+                    sizeof(time_T)*1);
+      ssSetSampleTimePtr(rts, &sfcnPeriod[0]);
+      ssSetOffsetTimePtr(rts, &sfcnOffset[0]);
+      ssSetSampleTimeTaskIDPtr(rts, sfcnTsMap);
+
+      {
+        ssSetBlkInfo2Ptr(rts, &doubling_M->NonInlinedSFcns.blkInfo2[3]);
+      }
+
+      _ssSetBlkInfo2PortInfo2Ptr(rts,
+        &doubling_M->NonInlinedSFcns.inputOutputPortInfo2[3]);
+
+      /* Set up the mdlInfo pointer */
+      ssSetRTWSfcnInfo(rts, doubling_M->sfcnInfo);
+
+      /* Allocate memory of model methods 2 */
+      {
+        ssSetModelMethods2(rts, &doubling_M->NonInlinedSFcns.methods2[3]);
+      }
+
+      /* Allocate memory of model methods 3 */
+      {
+        ssSetModelMethods3(rts, &doubling_M->NonInlinedSFcns.methods3[3]);
+      }
+
+      /* Allocate memory of model methods 4 */
+      {
+        ssSetModelMethods4(rts, &doubling_M->NonInlinedSFcns.methods4[3]);
+      }
+
+      /* Allocate memory for states auxilliary information */
+      {
+        ssSetStatesInfo2(rts, &doubling_M->NonInlinedSFcns.statesInfo2[3]);
+        ssSetPeriodicStatesInfo(rts,
+          &doubling_M->NonInlinedSFcns.periodicStatesInfo[3]);
+      }
+
+      /* inputs */
+      {
+        _ssSetNumInputPorts(rts, 2);
+        ssSetPortInfoForInputs(rts,
+          &doubling_M->NonInlinedSFcns.Sfcn3.inputPortInfo[0]);
+        ssSetPortInfoForInputs(rts,
+          &doubling_M->NonInlinedSFcns.Sfcn3.inputPortInfo[0]);
+        _ssSetPortInfo2ForInputUnits(rts,
+          &doubling_M->NonInlinedSFcns.Sfcn3.inputPortUnits[0]);
+        ssSetInputPortUnit(rts, 0, 0);
+        ssSetInputPortUnit(rts, 1, 0);
+        _ssSetPortInfo2ForInputCoSimAttribute(rts,
+          &doubling_M->NonInlinedSFcns.Sfcn3.inputPortCoSimAttribute[0]);
         ssSetInputPortIsContinuousQuantity(rts, 0, 0);
         ssSetInputPortIsContinuousQuantity(rts, 1, 0);
 
         /* port 0 */
         {
           int32_T const **sfcnUPtrs = (int32_T const **)
-            &doubling_M->NonInlinedSFcns.Sfcn2.UPtrs0;
+            &doubling_M->NonInlinedSFcns.Sfcn3.UPtrs0;
 
           {
             int_T i1;
@@ -557,7 +721,7 @@ void doubling_initialize(void)
         /* port 1 */
         {
           int32_T const **sfcnUPtrs = (int32_T const **)
-            &doubling_M->NonInlinedSFcns.Sfcn2.UPtrs1;
+            &doubling_M->NonInlinedSFcns.Sfcn3.UPtrs1;
 
           {
             int_T i1;
@@ -584,7 +748,7 @@ void doubling_initialize(void)
       /* parameters */
       {
         mxArray **sfcnParams = (mxArray **)
-          &doubling_M->NonInlinedSFcns.Sfcn2.params;
+          &doubling_M->NonInlinedSFcns.Sfcn3.params;
         ssSetSFcnParamsCount(rts, 3);
         ssSetSFcnParamsPtr(rts, &sfcnParams[0]);
         ssSetSFcnParam(rts, 0, (mxArray*)doubling_P.pisound_out_P1_Size);
@@ -644,10 +808,17 @@ void doubling_terminate(void)
     sfcnTerminate(rts);
   }
 
+  /* Terminate for S-Function (ctrl_out): '<Root>/S-Function1' */
+  /* Level2 S-Function Block: '<Root>/S-Function1' (ctrl_out) */
+  {
+    SimStruct *rts = doubling_M->childSfunctions[2];
+    sfcnTerminate(rts);
+  }
+
   /* Terminate for S-Function (pisound_out): '<Root>/pisound_out' */
   /* Level2 S-Function Block: '<Root>/pisound_out' (pisound_out) */
   {
-    SimStruct *rts = doubling_M->childSfunctions[2];
+    SimStruct *rts = doubling_M->childSfunctions[3];
     sfcnTerminate(rts);
   }
 }

@@ -13,9 +13,9 @@
 
 # MIDI Control Change mappings
 # Using Oxygen 25 default CC assignments
-midi|cc:74|0|100|50|delay_ms
-midi|cc:71|0|1|100|depth
-midi|cc:52|0|1|100|spread
+midi|cc:52|0|1|50|delay_ms
+midi|cc:74|0|1|100|depth
+midi|cc:71|0|1|100|spread
 midi|cc:64|0|1|0|bypass
 
 # OSC mappings (same params, accessible via UDP port 9000)

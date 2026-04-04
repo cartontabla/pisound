@@ -12,7 +12,9 @@
 -DENABLE_CONTROL
 -DENABLE_OSC
 -DCTRL_MIDI_PORT="Oxygen 25:0"
--DCTRL_CONFIG_FILE="../common/control/ctrl_config_doubling.txt"
+-DCTRL_CONFIG_FILE="ctrl_config_doubling.txt"
 -DCTRL_NUM_PARAMS=4
 -DCTRL_SAMPLE_RATE=48000
 -DCTRL_FRAME_SIZE=128
+-DCTRL_OSC_TX_NUM=4
+-DCTRL_TX_CONFIG_FILE="ctrl_tx.conf"
