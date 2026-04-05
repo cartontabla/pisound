@@ -46,6 +46,9 @@ classdef env_sys < matlab.System
       Lin_dB = zeros(Nloc,1);
       env    = zeros(Nloc,1);
 
+      % Estéreo enlazado por máximo
+      in = max(abs(inL), abs(inR));
+
       if isempty(mode)
         mode = obj.ModeDefault;
       end
@@ -54,7 +57,7 @@ classdef env_sys < matlab.System
       if mode == uint8(1)
         % -------- PEAK (instantáneo) --------
         for n = 1:Nloc
-          e = abs(in(n));
+          e = in(n);
           env(n) = e;
           Lin_dB(n) = 20*log10(e + obj.Eps);
         end
@@ -75,7 +78,7 @@ classdef env_sys < matlab.System
 
       else
         for n = 1:Nloc
-          e = abs(in(n));
+          e = in(n);
           env(n) = e;
           Lin_dB(n) = 20*log10(e + obj.Eps);
         end

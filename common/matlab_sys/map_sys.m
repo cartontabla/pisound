@@ -10,10 +10,14 @@ classdef map_sys < matlab.System
 % Modos:
 % 1 = vocoder_env_db con threshold+slope
 % 2 = dB offset + clip
+% 3 = leveller: G = Offset - u, limitado a [outMin, outMax]
 %
 % Observación:
 % Para vocoder, lo más natural suele ser:
 % ENV(dB) -> MAP(mode=1) -> ARF -> VCA
+%
+% Para leveller:
+% ENV(dB) -> MAP(mode=3, Offset=ref_dB) -> ARF -> VCA
 
   properties(Nontunable)
     bypass (1,1) uint8 = 0; % 0=fx, 1=bypass 
@@ -52,6 +56,10 @@ classdef map_sys < matlab.System
           case 2  % dB offset + clip
             y = x + obj.Offset;
             y = local_clip(y, min(outMin,outMax), max(outMin,outMax));
+
+          case 3  % leveller: G = ref_dB - nivel_actual
+            y = obj.Offset - x;
+            y = local_clip(y, outMin, outMax);
 
         otherwise
           y = x;
