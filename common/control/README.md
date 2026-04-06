@@ -235,7 +235,7 @@ gcc -o test_ctrl test_ctrl_arch.c ctrl_*.c midi_*.c -lm
 | Both | Multi-source per parameter (MIDI+OSC same slot) | ✓ done |
 | Both | Click-free ramping | ✓ done |
 | Runtime config | `ctrl_tx.conf` — multiple `ip=` lines, one `port=` | ✓ done |
-| BLE MIDI | TP-Link UB500 (RTL8761B) dongle | ⚠ pending dongle |
+| BLE MIDI | TP-Link UB500 (RTL8761B) dongle + WIDI Core | ✓ done |
 | Any | Presets / scene recall | future |
 
 ### OSC TX status
@@ -256,8 +256,22 @@ Verified with `strace` confirming `sendto` to both IPs.
 
 ### BLE MIDI status
 
-Blocked by BCM4345C0 LL overhead on the Pi 5's built-in Bluetooth.
-TP-Link UB500 (RTL8761B) dongle ordered — pending arrival and testing.
+**Verified working (2026-04-06)** with TP-Link UB500 (RTL8761B) USB dongle on `hci0`.
+
+- Pi 5 built-in BT (`hci1`, BCM4345C0) had LL overhead issues — replaced with UB500.
+- BlueZ does **not** expose the MIDI GATT service (`03b80e5a`) as a D-Bus object (service
+  at handles 0x0019–0x001c is skipped during enumeration).
+- `ble_midi_bridge.py` auto-detects this and falls back to `gatttool --listen`
+  on handle `0x001b` (characteristic `7772e5db`).
+- WIDI Core must be **paired + trusted** via bluetoothctl before first use:
+  ```
+  bluetoothctl
+  select 58:04:4F:6B:8E:9A        # UB500
+  pair 10:2E:AB:D6:BC:4C          # WIDI Core
+  trust 10:2E:AB:D6:BC:4C
+  ```
+- Bridge writes raw MIDI to `/dev/snd/midiC1D0` (snd-virmidi, `Virtual Raw MIDI 1-0`).
+- To connect to the control binary: `aconnect "Virtual Raw MIDI 1-0":0 pisound-control:0`
 
 ## Future Extensions
 

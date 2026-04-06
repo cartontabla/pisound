@@ -44,8 +44,9 @@ import sys
 import os
 import time
 
-DEFAULT_MAC        = "10:2E:AB:D6:BC:4C"
-BLE_MIDI_CHAR_UUID = "7772e5db-3868-4112-a1a9-f2669d106bf3"
+DEFAULT_MAC            = "10:2E:AB:D6:BC:4C"
+BLE_MIDI_CHAR_UUID     = "7772e5db-3868-4112-a1a9-f2669d106bf3"
+BLE_MIDI_CHAR_HANDLE   = "0x001b"   # fallback when BlueZ skips GATT service
 
 BLUEZ_SERVICE  = "org.bluez"
 ADAPTER_IFACE  = "org.bluez.Adapter1"
@@ -160,6 +161,102 @@ def _find_char_path(bus, midi_uuid):
     return None
 
 
+def _run_dbus_notify(bus, char_path, dev_obj, device, midi_fd):
+    """Use BlueZ D-Bus GATT to receive MIDI notifications."""
+    char_obj = bus.get_object(BLUEZ_SERVICE, char_path)
+    char_if  = dbus.Interface(char_obj, GATTCHAR_IFACE)
+
+    def _midi_notify(iface, changed, _invalidated):
+        if "Value" in changed:
+            raw  = bytes(changed["Value"])
+            midi = parse_ble_midi(raw)
+            if midi:
+                midi_fd.write(midi)
+                print(f"[midi] {midi.hex(' ')}")
+
+    char_obj.connect_to_signal(
+        "PropertiesChanged", _midi_notify, dbus_interface=PROPS_IFACE)
+
+    char_if.StartNotify()
+    print("[bridge] Notifications enabled — forwarding MIDI to virmidi.")
+    print("[bridge] Running — Ctrl+C to stop.")
+
+    run_loop = GLib.MainLoop()
+
+    def _disconnected(iface, changed, _invalidated):
+        if iface == DEVICE_IFACE:
+            if "Connected" in changed and not bool(changed["Connected"]):
+                print("[bridge] Device disconnected.")
+                run_loop.quit()
+
+    dev_obj.connect_to_signal(
+        "PropertiesChanged", _disconnected, dbus_interface=PROPS_IFACE)
+
+    try:
+        run_loop.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        try:
+            char_if.StopNotify()
+        except Exception:
+            pass
+        try:
+            device.Disconnect()
+        except Exception:
+            pass
+        midi_fd.close()
+        print("\n[bridge] Stopped.")
+
+
+def _run_gatttool_notify(mac, midi_fd):
+    """Fallback: use gatttool --listen to receive MIDI notifications."""
+    import re
+    import subprocess as sp
+
+    # Enable notifications by writing 0x0100 to the CCC descriptor (handle + 1)
+    ccc_handle = hex(int(BLE_MIDI_CHAR_HANDLE, 16) + 1)
+    cmd_enable = [
+        "gatttool", "-i", "hci0", "-b", mac,
+        "--char-write-req", f"--handle={ccc_handle}", "--value=0100"
+    ]
+    cmd_listen = [
+        "gatttool", "-i", "hci0", "-b", mac,
+        "--char-read", f"--handle={BLE_MIDI_CHAR_HANDLE}", "--listen"
+    ]
+
+    try:
+        sp.run(cmd_enable, timeout=10, capture_output=True)
+    except Exception as e:
+        print(f"[bridge] CCC write warning: {e}", file=sys.stderr)
+
+    print("[bridge] gatttool listening for MIDI notifications...")
+    print("[bridge] Running — Ctrl+C to stop.")
+
+    pattern = re.compile(r"Notification handle = .* value: ([0-9a-f ]+)")
+
+    try:
+        proc = sp.Popen(cmd_listen, stdout=sp.PIPE, stderr=sp.STDOUT, text=True)
+        for line in proc.stdout:
+            line = line.strip()
+            m = pattern.search(line)
+            if m:
+                raw  = bytes.fromhex(m.group(1).replace(" ", ""))
+                midi = parse_ble_midi(raw)
+                if midi:
+                    midi_fd.write(midi)
+                    print(f"[midi] {midi.hex(' ')}")
+    except KeyboardInterrupt:
+        pass
+    finally:
+        try:
+            proc.terminate()
+        except Exception:
+            pass
+        midi_fd.close()
+        print("\n[bridge] Stopped.")
+
+
 def main():
     mac = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_MAC.upper()
 
@@ -269,65 +366,18 @@ def main():
     # 3. Find MIDI characteristic and enable notifications
     # -----------------------------------------------------------------------
     char_path = _find_char_path(bus, BLE_MIDI_CHAR_UUID)
-    if not char_path:
-        print(f"ERROR: MIDI characteristic {BLE_MIDI_CHAR_UUID} not found.",
-              file=sys.stderr)
+
+    if char_path:
+        print(f"[bridge] MIDI char: {char_path}")
+        _run_dbus_notify(bus, char_path, dev_obj, device, midi_fd)
+    else:
+        print(f"[bridge] MIDI char not in D-Bus — falling back to gatttool "
+              f"(handle {BLE_MIDI_CHAR_HANDLE})")
         try:
             device.Disconnect()
         except Exception:
             pass
-        midi_fd.close()
-        sys.exit(1)
-
-    print(f"[bridge] MIDI char: {char_path}")
-
-    char_obj = bus.get_object(BLUEZ_SERVICE, char_path)
-    char_if  = dbus.Interface(char_obj, GATTCHAR_IFACE)
-
-    def _midi_notify(iface, changed, _invalidated):
-        if "Value" in changed:
-            raw  = bytes(changed["Value"])
-            midi = parse_ble_midi(raw)
-            if midi:
-                midi_fd.write(midi)
-                print(f"[midi] {midi.hex(' ')}")
-
-    char_obj.connect_to_signal(
-        "PropertiesChanged", _midi_notify, dbus_interface=PROPS_IFACE)
-
-    char_if.StartNotify()
-    print("[bridge] Notifications enabled — forwarding MIDI to virmidi.")
-    print("[bridge] Running — Ctrl+C to stop.")
-
-    # -----------------------------------------------------------------------
-    # 4. Run until disconnected or Ctrl+C
-    # -----------------------------------------------------------------------
-    run_loop = GLib.MainLoop()
-
-    def _disconnected(iface, changed, _invalidated):
-        if iface == DEVICE_IFACE:
-            if "Connected" in changed and not bool(changed["Connected"]):
-                print("[bridge] Device disconnected.")
-                run_loop.quit()
-
-    dev_obj.connect_to_signal(
-        "PropertiesChanged", _disconnected, dbus_interface=PROPS_IFACE)
-
-    try:
-        run_loop.run()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        try:
-            char_if.StopNotify()
-        except Exception:
-            pass
-        try:
-            device.Disconnect()
-        except Exception:
-            pass
-        midi_fd.close()
-        print("\n[bridge] Stopped.")
+        _run_gatttool_notify(mac, midi_fd)
 
 
 if __name__ == "__main__":
