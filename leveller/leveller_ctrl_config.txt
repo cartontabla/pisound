@@ -1,13 +1,13 @@
-midi|cc:52|-40|0|0|outMin
-midi|cc:74|0|40|0|outMax
-midi|cc:71|0.01|2.0|0|attack
-midi|cc:64|0.01|5.0|0|release
-midi|cc:16|0|1|0|mix
-midi|cc:53|-40|0|0|Offset
+midi|cc:74|-24|12|0|offset
+midi|cc:71|0|1|0|mix
+midi|cc:52|0.005|0.2|0|attack
+midi|cc:91|0.05|1.0|0|release
+midi|cc:8|-30|0|0|outMin
+midi|cc:9|0|18|0|outMax
 
-osc|/leveller/outMin|-40|0|0|outMin
-osc|/leveller/outMax|0|40|0|outMax
-osc|/leveller/attack|0.01|2.0|0|attack
-osc|/leveller/release|0.01|5.0|0|release
+osc|/leveller/offset|-24|12|0|offset
 osc|/leveller/mix|0|1|0|mix
-osc|/leveller/offset|-40|0|0|Offset
+osc|/leveller/attack|0.005|0.2|0|attack
+osc|/leveller/release|0.05|1.0|0|release
+osc|/leveller/outMin|-30|0|0|outMin
+osc|/leveller/outMax|0|18|0|outMax

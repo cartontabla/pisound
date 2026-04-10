@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'leveller'.
  *
- * Model version                  : 1.26
+ * Model version                  : 1.31
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Apr  4 13:57:20 2026
+ * C/C++ source code generated on : Fri Apr 10 21:03:07 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: Intel->x86-64 (Windows64)
@@ -19,13 +19,9 @@
 
 #include "leveller.h"
 #include <math.h>
-#include <string.h>
 #include "leveller_private.h"
 #include "rt_nonfinite.h"
 #include "rtwtypes.h"
-
-const uint8_T leveller_U8GND = 0U;     /* uint8_T ground */
-const uint32_T leveller_U32GND = 0U;   /* uint32_T ground */
 
 /* Block signals (default storage) */
 B_leveller_T leveller_B;
@@ -88,8 +84,8 @@ void leveller_step(void)
   real_T in[128];
   real_T rtb_Gain[128];
   real_T rtb_Gain1[128];
-  real_T rtb_VCA_o1[128];
-  real_T varargin_1[128];
+  real_T rtb_VCA_o2[128];
+  real_T varargin_2[128];
   real_T alpha;
   real_T e;
   real_T g;
@@ -142,7 +138,7 @@ void leveller_step(void)
   if (leveller_P.Constant_Value == 1) {
     /*  -------- PEAK (instantáneo) -------- */
     for (i = 0; i < 128; i++) {
-      varargin_1[i] = log10(in[i] + leveller_DW.obj_n.Eps) * 20.0;
+      varargin_2[i] = log10(in[i] + leveller_DW.obj_n.Eps) * 20.0;
     }
   } else if (leveller_P.Constant_Value == 2) {
     /*  -------- RMS exponencial (real) -------- */
@@ -151,86 +147,81 @@ void leveller_step(void)
       e = in[i];
       e = (1.0 - alpha) * (e * e) + alpha * leveller_DW.obj_n.e_prev;
       leveller_DW.obj_n.e_prev = e;
-      varargin_1[i] = log10(sqrt(e + leveller_DW.obj_n.Eps)) * 20.0;
+      varargin_2[i] = log10(sqrt(e + leveller_DW.obj_n.Eps)) * 20.0;
     }
   } else {
     for (i = 0; i < 128; i++) {
-      varargin_1[i] = log10(in[i] + leveller_DW.obj_n.Eps) * 20.0;
+      varargin_2[i] = log10(in[i] + leveller_DW.obj_n.Eps) * 20.0;
     }
   }
 
-  /* MATLABSystem: '<Root>/GC' incorporates:
-   *  Constant: '<Root>/Constant4'
-   *  Constant: '<Root>/Constant5'
+  /* S-Function (ctrl_in): '<Root>/S-Function' */
+
+  /* Level2 S-Function Block: '<Root>/S-Function' (ctrl_in) */
+  {
+    SimStruct *rts = leveller_M->childSfunctions[1];
+    sfcnOutputs(rts,0);
+  }
+
+  /* MATLABSystem: '<Root>/MAP' incorporates:
    *  MATLABSystem: '<Root>/ENV'
    */
-  if (leveller_DW.obj_o.Mode != leveller_P.GC_Mode) {
-    leveller_DW.obj_o.Mode = leveller_P.GC_Mode;
+  if (leveller_DW.obj_o.Mode != leveller_P.MAP_Mode) {
+    leveller_DW.obj_o.Mode = leveller_P.MAP_Mode;
   }
 
-  if (leveller_DW.obj_o.Offset != leveller_P.GC_Offset) {
-    leveller_DW.obj_o.Offset = leveller_P.GC_Offset;
+  if (leveller_DW.obj_o.Offset != leveller_P.MAP_Offset) {
+    leveller_DW.obj_o.Offset = leveller_P.MAP_Offset;
   }
 
-  if (leveller_DW.obj_o.Threshold != leveller_P.GC_Threshold) {
-    leveller_DW.obj_o.Threshold = leveller_P.GC_Threshold;
+  if (leveller_DW.obj_o.Threshold != leveller_P.MAP_Threshold) {
+    leveller_DW.obj_o.Threshold = leveller_P.MAP_Threshold;
   }
 
-  if (leveller_DW.obj_o.Slope != leveller_P.GC_Slope) {
-    leveller_DW.obj_o.Slope = leveller_P.GC_Slope;
+  if (leveller_DW.obj_o.Slope != leveller_P.MAP_Slope) {
+    leveller_DW.obj_o.Slope = leveller_P.MAP_Slope;
   }
 
   switch (leveller_DW.obj_o.Mode) {
    case 1U:
     /*  vocoder_env_db con threshold+slope */
     for (i = 0; i < 128; i++) {
-      alpha = fmax(fmax(varargin_1[i] - leveller_DW.obj_o.Threshold, 0.0) *
-                   leveller_DW.obj_o.Slope + leveller_P.Constant4_Value,
-                   leveller_P.Constant4_Value);
-      varargin_1[i] = alpha;
-      rtb_VCA_o1[i] = fmin(alpha, leveller_P.Constant5_Value);
+      varargin_2[i] = fmin(fmax(fmax(varargin_2[i] - leveller_DW.obj_o.Threshold,
+        0.0) * leveller_DW.obj_o.Slope + leveller_B.SFunction_o5,
+        leveller_B.SFunction_o5), leveller_B.SFunction_o6);
     }
     break;
 
    case 2U:
     /*  dB offset + clip */
-    e = fmin(leveller_P.Constant4_Value, leveller_P.Constant5_Value);
-    g = fmax(leveller_P.Constant4_Value, leveller_P.Constant5_Value);
+    alpha = fmin(leveller_B.SFunction_o5, leveller_B.SFunction_o6);
+    e = fmax(leveller_B.SFunction_o5, leveller_B.SFunction_o6);
     for (i = 0; i < 128; i++) {
-      alpha = fmax(varargin_1[i] + leveller_DW.obj_o.Offset, e);
-      varargin_1[i] = alpha;
-      rtb_VCA_o1[i] = fmin(alpha, g);
+      varargin_2[i] = fmin(fmax(varargin_2[i] + leveller_DW.obj_o.Offset, alpha),
+                           e);
     }
     break;
 
    case 3U:
     /*  leveller: G = ref_dB - nivel_actual */
     for (i = 0; i < 128; i++) {
-      alpha = fmax(leveller_DW.obj_o.Offset - varargin_1[i],
-                   leveller_P.Constant4_Value);
-      varargin_1[i] = alpha;
-      rtb_VCA_o1[i] = fmin(alpha, leveller_P.Constant5_Value);
+      varargin_2[i] = fmin(fmax(leveller_DW.obj_o.Offset - varargin_2[i],
+        leveller_B.SFunction_o5), leveller_B.SFunction_o6);
     }
-    break;
-
-   default:
-    memcpy(&rtb_VCA_o1[0], &varargin_1[0], sizeof(real_T) << 7U);
     break;
   }
 
   /* MATLABSystem: '<Root>/ARF' incorporates:
-   *  Constant: '<Root>/Constant2'
-   *  Constant: '<Root>/Constant3'
-   *  MATLABSystem: '<Root>/GC'
+   *  MATLABSystem: '<Root>/MAP'
    */
   /*  bypass del suavizado */
   /*  tiempos válidos */
-  alpha = exp(-1.0 / (fmax(leveller_P.Constant3_Value, 1.0E-6) * 48000.0));
-  e = exp(-1.0 / (fmax(leveller_P.Constant2_Value, 1.0E-6) * 48000.0));
+  alpha = exp(-1.0 / (fmax(leveller_B.SFunction_o3, 1.0E-6) * 48000.0));
+  e = exp(-1.0 / (fmax(leveller_B.SFunction_o4, 1.0E-6) * 48000.0));
   g = leveller_DW.obj_m.gPrev_dB;
   for (i = 0; i < 128; i++) {
-    /* MATLABSystem: '<Root>/GC' */
-    gd2_ = rtb_VCA_o1[i];
+    /* MATLABSystem: '<Root>/MAP' */
+    gd2_ = varargin_2[i];
     if (gd2_ < g) {
       /*  más reducción de ganancia -> attack */
       g = (1.0 - alpha) * gd2_ + alpha * g;
@@ -239,7 +230,7 @@ void leveller_step(void)
       g = (1.0 - e) * gd2_ + e * g;
     }
 
-    in[i] = g;
+    rtb_VCA_o2[i] = g;
   }
 
   leveller_DW.obj_m.gPrev_dB = g;
@@ -251,7 +242,7 @@ void leveller_step(void)
   /*  g es Nx1 */
   if (leveller_P.Constant1_Value != 0) {
     for (i = 0; i < 128; i++) {
-      in[i] = rt_powd_snf(10.0, in[i] / 20.0);
+      rtb_VCA_o2[i] = rt_powd_snf(10.0, rtb_VCA_o2[i] / 20.0);
     }
 
     /*  dB -> lineal, elemento a elemento */
@@ -260,19 +251,16 @@ void leveller_step(void)
   /*  bp es logical */
   /*  elemento a elemento */
   for (i = 0; i < 128; i++) {
-    e = in[i];
-    rtb_VCA_o1[i] = rtb_Gain[i] * e;
+    alpha = rtb_VCA_o2[i];
+    in[i] = rtb_Gain[i] * alpha;
 
     /* MATLABSystem: '<Root>/VCA' */
-    in[i] = rtb_Gain1[i] * e;
+    rtb_VCA_o2[i] = rtb_Gain1[i] * alpha;
   }
 
   /* End of MATLABSystem: '<Root>/VCA' */
 
-  /* MATLABSystem: '<Root>/MIX' incorporates:
-   *  Constant: '<Root>/Constant15'
-   *  MATLABSystem: '<Root>/VCA'
-   */
+  /* MATLABSystem: '<Root>/MIX' */
   if (leveller_DW.obj.SmoothTime != leveller_P.MIX_SmoothTime) {
     leveller_DW.obj.SmoothTime = leveller_P.MIX_SmoothTime;
   }
@@ -284,7 +272,7 @@ void leveller_step(void)
   /*  inL,inR,wetL,wetR,p1 (+p2 si Mode=2) */
   /*  Mode 3: crossfade por muestra (p1 puede ser [N x 1]) */
   /*  dummy */
-  alpha = fmin(fmax(leveller_P.Mix_rt, 0.0), 1.0);
+  alpha = fmin(fmax(leveller_B.SFunction_o2, 0.0), 1.0);
   e = leveller_DW.obj.a;
   g = leveller_DW.obj.gd1;
   gd2_ = leveller_DW.obj.gd2;
@@ -297,13 +285,12 @@ void leveller_step(void)
     gw1_ += (alpha - gw1_) * e;
     gd2_ += ((1.0 - alpha) - gd2_) * e;
     gw2_ += (alpha - gw2_) * e;
-    varargin_1[i] = gd2_ * rtb_Gain1[i] + gw2_ * in[i];
 
     /* DataTypeConversion: '<Root>/Data Type Conversion1' incorporates:
      *  Gain: '<Root>/Gain2'
      *  MATLABSystem: '<Root>/VCA'
      */
-    tmp = floor((g * rtb_Gain[i] + gw1_ * rtb_VCA_o1[i]) * leveller_P.Gain2_Gain);
+    tmp = floor((g * rtb_Gain[i] + gw1_ * in[i]) * leveller_P.Gain2_Gain);
     if (rtIsNaN(tmp) || rtIsInf(tmp)) {
       tmp = 0.0;
     } else {
@@ -313,27 +300,13 @@ void leveller_step(void)
     /* DataTypeConversion: '<Root>/Data Type Conversion1' */
     leveller_B.DataTypeConversion1[i] = tmp < 0.0 ? -(int32_T)(uint32_T)-tmp :
       (int32_T)(uint32_T)tmp;
-  }
 
-  leveller_DW.obj.gd1 = g;
-  leveller_DW.obj.gd2 = gd2_;
-  leveller_DW.obj.gw1 = gw1_;
-  leveller_DW.obj.gw2 = gw2_;
-
-  /* S-Function (ctrl_in): '<Root>/S-Function' */
-
-  /* Level2 S-Function Block: '<Root>/S-Function' (ctrl_in) */
-  {
-    SimStruct *rts = leveller_M->childSfunctions[1];
-    sfcnOutputs(rts,0);
-  }
-
-  for (i = 0; i < 128; i++) {
     /* DataTypeConversion: '<Root>/Data Type Conversion3' incorporates:
      *  Gain: '<Root>/Gain3'
-     *  MATLABSystem: '<Root>/MIX'
+     *  MATLABSystem: '<Root>/VCA'
      */
-    tmp = floor(leveller_P.Gain3_Gain * varargin_1[i]);
+    tmp = floor((gd2_ * rtb_Gain1[i] + gw2_ * rtb_VCA_o2[i]) *
+                leveller_P.Gain3_Gain);
     if (rtIsNaN(tmp) || rtIsInf(tmp)) {
       tmp = 0.0;
     } else {
@@ -344,6 +317,13 @@ void leveller_step(void)
     leveller_B.DataTypeConversion3[i] = tmp < 0.0 ? -(int32_T)(uint32_T)-tmp :
       (int32_T)(uint32_T)tmp;
   }
+
+  leveller_DW.obj.gd1 = g;
+  leveller_DW.obj.gd2 = gd2_;
+  leveller_DW.obj.gw1 = gw1_;
+  leveller_DW.obj.gw2 = gw2_;
+
+  /* End of MATLABSystem: '<Root>/MIX' */
 
   /* S-Function (pisound_out): '<Root>/PiSound Output' */
 
@@ -493,19 +473,15 @@ void leveller_initialize(void)
           &leveller_M->NonInlinedSFcns.Sfcn0.outputPortInfo[0]);
         ssSetPortInfoForOutputs(rts,
           &leveller_M->NonInlinedSFcns.Sfcn0.outputPortInfo[0]);
-        _ssSetNumOutputPorts(rts, 4);
+        _ssSetNumOutputPorts(rts, 2);
         _ssSetPortInfo2ForOutputUnits(rts,
           &leveller_M->NonInlinedSFcns.Sfcn0.outputPortUnits[0]);
         ssSetOutputPortUnit(rts, 0, 0);
         ssSetOutputPortUnit(rts, 1, 0);
-        ssSetOutputPortUnit(rts, 2, 0);
-        ssSetOutputPortUnit(rts, 3, 0);
         _ssSetPortInfo2ForOutputCoSimAttribute(rts,
           &leveller_M->NonInlinedSFcns.Sfcn0.outputPortCoSimAttribute[0]);
         ssSetOutputPortIsContinuousQuantity(rts, 0, 0);
         ssSetOutputPortIsContinuousQuantity(rts, 1, 0);
-        ssSetOutputPortIsContinuousQuantity(rts, 2, 0);
-        ssSetOutputPortIsContinuousQuantity(rts, 3, 0);
 
         /* port 0 */
         {
@@ -519,21 +495,6 @@ void leveller_initialize(void)
           _ssSetOutputPortNumDimensions(rts, 1, 1);
           ssSetOutputPortWidthAsInt(rts, 1, 128);
           ssSetOutputPortSignal(rts, 1, ((int32_T *) leveller_B.PiSoundInput_o2));
-        }
-
-        /* port 2 */
-        {
-          _ssSetOutputPortNumDimensions(rts, 2, 1);
-          ssSetOutputPortWidthAsInt(rts, 2, 128);
-          ssSetOutputPortSignal(rts, 2, ((uint8_T *) leveller_B.PiSoundInput_o3));
-        }
-
-        /* port 3 */
-        {
-          _ssSetOutputPortNumDimensions(rts, 3, 1);
-          ssSetOutputPortWidthAsInt(rts, 3, 1);
-          ssSetOutputPortSignal(rts, 3, ((uint32_T *)
-            &leveller_B.PiSoundInput_o4));
         }
       }
 
@@ -572,12 +533,8 @@ void leveller_initialize(void)
       /* Update connectivity flags for each port */
       _ssSetOutputPortConnected(rts, 0, 1);
       _ssSetOutputPortConnected(rts, 1, 1);
-      _ssSetOutputPortConnected(rts, 2, 0);
-      _ssSetOutputPortConnected(rts, 3, 0);
       _ssSetOutputPortBeingMerged(rts, 0, 0);
       _ssSetOutputPortBeingMerged(rts, 1, 0);
-      _ssSetOutputPortBeingMerged(rts, 2, 0);
-      _ssSetOutputPortBeingMerged(rts, 3, 0);
 
       /* Update the BufferDstPort flags for each input port */
     }
@@ -731,11 +688,11 @@ void leveller_initialize(void)
 
       /* Update connectivity flags for each port */
       _ssSetOutputPortConnected(rts, 0, 0);
-      _ssSetOutputPortConnected(rts, 1, 0);
-      _ssSetOutputPortConnected(rts, 2, 0);
-      _ssSetOutputPortConnected(rts, 3, 0);
-      _ssSetOutputPortConnected(rts, 4, 0);
-      _ssSetOutputPortConnected(rts, 5, 0);
+      _ssSetOutputPortConnected(rts, 1, 1);
+      _ssSetOutputPortConnected(rts, 2, 1);
+      _ssSetOutputPortConnected(rts, 3, 1);
+      _ssSetOutputPortConnected(rts, 4, 1);
+      _ssSetOutputPortConnected(rts, 5, 1);
       _ssSetOutputPortBeingMerged(rts, 0, 0);
       _ssSetOutputPortBeingMerged(rts, 1, 0);
       _ssSetOutputPortBeingMerged(rts, 2, 0);
@@ -796,7 +753,7 @@ void leveller_initialize(void)
 
       /* inputs */
       {
-        _ssSetNumInputPorts(rts, 4);
+        _ssSetNumInputPorts(rts, 2);
         ssSetPortInfoForInputs(rts,
           &leveller_M->NonInlinedSFcns.Sfcn2.inputPortInfo[0]);
         ssSetPortInfoForInputs(rts,
@@ -805,14 +762,10 @@ void leveller_initialize(void)
           &leveller_M->NonInlinedSFcns.Sfcn2.inputPortUnits[0]);
         ssSetInputPortUnit(rts, 0, 0);
         ssSetInputPortUnit(rts, 1, 0);
-        ssSetInputPortUnit(rts, 2, 0);
-        ssSetInputPortUnit(rts, 3, 0);
         _ssSetPortInfo2ForInputCoSimAttribute(rts,
           &leveller_M->NonInlinedSFcns.Sfcn2.inputPortCoSimAttribute[0]);
         ssSetInputPortIsContinuousQuantity(rts, 0, 0);
         ssSetInputPortIsContinuousQuantity(rts, 1, 0);
-        ssSetInputPortIsContinuousQuantity(rts, 2, 0);
-        ssSetInputPortIsContinuousQuantity(rts, 3, 0);
 
         /* port 0 */
         {
@@ -848,33 +801,6 @@ void leveller_initialize(void)
           ssSetInputPortSignalPtrs(rts, 1, (InputPtrsType)&sfcnUPtrs[0]);
           _ssSetInputPortNumDimensions(rts, 1, 1);
           ssSetInputPortWidthAsInt(rts, 1, 128);
-        }
-
-        /* port 2 */
-        {
-          uint8_T const **sfcnUPtrs = (uint8_T const **)
-            &leveller_M->NonInlinedSFcns.Sfcn2.UPtrs2;
-
-          {
-            int_T i1;
-            for (i1=0; i1 < 128; i1++) {
-              sfcnUPtrs[i1] = ((const uint8_T*) &leveller_U8GND);
-            }
-          }
-
-          ssSetInputPortSignalPtrs(rts, 2, (InputPtrsType)&sfcnUPtrs[0]);
-          _ssSetInputPortNumDimensions(rts, 2, 1);
-          ssSetInputPortWidthAsInt(rts, 2, 128);
-        }
-
-        /* port 3 */
-        {
-          uint32_T const **sfcnUPtrs = (uint32_T const **)
-            &leveller_M->NonInlinedSFcns.Sfcn2.UPtrs3;
-          sfcnUPtrs[0] = ((const uint32_T*) &leveller_U32GND);
-          ssSetInputPortSignalPtrs(rts, 3, (InputPtrsType)&sfcnUPtrs[0]);
-          _ssSetInputPortNumDimensions(rts, 3, 1);
-          ssSetInputPortWidthAsInt(rts, 3, 1);
         }
       }
 
@@ -913,14 +839,10 @@ void leveller_initialize(void)
       /* Update connectivity flags for each port */
       _ssSetInputPortConnected(rts, 0, 1);
       _ssSetInputPortConnected(rts, 1, 1);
-      _ssSetInputPortConnected(rts, 2, 0);
-      _ssSetInputPortConnected(rts, 3, 0);
 
       /* Update the BufferDstPort flags for each input port */
       ssSetInputPortBufferDstPort(rts, 0, -1);
       ssSetInputPortBufferDstPort(rts, 1, -1);
-      ssSetInputPortBufferDstPort(rts, 2, -1);
-      ssSetInputPortBufferDstPort(rts, 3, -1);
     }
   }
 
@@ -933,11 +855,11 @@ void leveller_initialize(void)
   /* InitializeConditions for MATLABSystem: '<Root>/ENV' */
   leveller_DW.obj_n.e_prev = 0.0;
 
-  /* Start for MATLABSystem: '<Root>/GC' */
-  leveller_DW.obj_o.Mode = leveller_P.GC_Mode;
-  leveller_DW.obj_o.Offset = leveller_P.GC_Offset;
-  leveller_DW.obj_o.Threshold = leveller_P.GC_Threshold;
-  leveller_DW.obj_o.Slope = leveller_P.GC_Slope;
+  /* Start for MATLABSystem: '<Root>/MAP' */
+  leveller_DW.obj_o.Mode = leveller_P.MAP_Mode;
+  leveller_DW.obj_o.Offset = leveller_P.MAP_Offset;
+  leveller_DW.obj_o.Threshold = leveller_P.MAP_Threshold;
+  leveller_DW.obj_o.Slope = leveller_P.MAP_Slope;
   leveller_DW.obj_o.isInitialized = 1;
 
   /* Start for MATLABSystem: '<Root>/ARF' */

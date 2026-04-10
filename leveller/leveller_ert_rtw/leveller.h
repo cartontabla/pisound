@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'leveller'.
  *
- * Model version                  : 1.26
+ * Model version                  : 1.31
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Apr  4 13:57:20 2026
+ * C/C++ source code generated on : Fri Apr 10 21:03:07 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: Intel->x86-64 (Windows64)
@@ -99,41 +99,36 @@ typedef struct {
   real_T SFunction_o4;                 /* '<Root>/S-Function' */
   real_T SFunction_o5;                 /* '<Root>/S-Function' */
   real_T SFunction_o6;                 /* '<Root>/S-Function' */
-  uint32_T PiSoundInput_o4;            /* '<Root>/PiSound Input' */
   int32_T PiSoundInput_o1[128];        /* '<Root>/PiSound Input' */
   int32_T PiSoundInput_o2[128];        /* '<Root>/PiSound Input' */
   int32_T DataTypeConversion1[128];    /* '<Root>/Data Type Conversion1' */
   int32_T DataTypeConversion3[128];    /* '<Root>/Data Type Conversion3' */
-  uint8_T PiSoundInput_o3[128];        /* '<Root>/PiSound Input' */
 } B_leveller_T;
 
 /* Block states (default storage) for system '<Root>' */
 typedef struct {
   mix_sys_leveller_T obj;              /* '<Root>/MIX' */
   env_sys_leveller_T obj_n;            /* '<Root>/ENV' */
-  map_sys_leveller_T obj_o;            /* '<Root>/GC' */
+  map_sys_leveller_T obj_o;            /* '<Root>/MAP' */
   arf_sys_leveller_T obj_m;            /* '<Root>/ARF' */
 } DW_leveller_T;
 
 /* Parameters (default storage) */
 struct P_leveller_T_ {
-  real_T Mix_rt;                       /* Variable: Mix_rt
-                                        * Referenced by: '<Root>/Constant15'
-                                        */
   real_T ENV_Eps;                      /* Expression: 1e-12
                                         * Referenced by: '<Root>/ENV'
                                         */
   real_T ENV_TauRMS;                   /* Expression: 0.02
                                         * Referenced by: '<Root>/ENV'
                                         */
-  real_T GC_Offset;                    /* Expression: 40
-                                        * Referenced by: '<Root>/GC'
+  real_T MAP_Offset;                   /* Expression: 40
+                                        * Referenced by: '<Root>/MAP'
                                         */
-  real_T GC_Threshold;                 /* Expression: -45
-                                        * Referenced by: '<Root>/GC'
+  real_T MAP_Threshold;                /* Expression: -45
+                                        * Referenced by: '<Root>/MAP'
                                         */
-  real_T GC_Slope;                     /* Expression: 1
-                                        * Referenced by: '<Root>/GC'
+  real_T MAP_Slope;                    /* Expression: 1
+                                        * Referenced by: '<Root>/MAP'
                                         */
   real_T MIX_SmoothTime;               /* Expression: 0.01
                                         * Referenced by: '<Root>/MIX'
@@ -162,21 +157,6 @@ struct P_leveller_T_ {
   real_T Gain1_Gain;                   /* Expression: 1/(2^31-1)
                                         * Referenced by: '<Root>/Gain1'
                                         */
-  real_T Constant4_Value;              /* Expression: -40
-                                        * Referenced by: '<Root>/Constant4'
-                                        */
-  real_T Constant5_Value;              /* Expression: 3
-                                        * Referenced by: '<Root>/Constant5'
-                                        */
-  real_T Constant3_Value;              /* Expression: 0.06
-                                        * Referenced by: '<Root>/Constant3'
-                                        */
-  real_T Constant2_Value;              /* Expression: 0.002
-                                        * Referenced by: '<Root>/Constant2'
-                                        */
-  real_T Gain2_Gain;                   /* Expression: 2^31-1
-                                        * Referenced by: '<Root>/Gain2'
-                                        */
   real_T SFunction_P1_Size[2];         /* Computed Parameter: SFunction_P1_Size
                                         * Referenced by: '<Root>/S-Function'
                                         */
@@ -194,6 +174,9 @@ struct P_leveller_T_ {
                                         */
   real_T SFunction_P3;                 /* Expression: 6
                                         * Referenced by: '<Root>/S-Function'
+                                        */
+  real_T Gain2_Gain;                   /* Expression: 2^31-1
+                                        * Referenced by: '<Root>/Gain2'
                                         */
   real_T Gain3_Gain;                   /* Expression: 2^31-1
                                         * Referenced by: '<Root>/Gain3'
@@ -222,8 +205,8 @@ struct P_leveller_T_ {
   uint8_T ENV_ModeDefault;             /* Expression: uint8( 1 )
                                         * Referenced by: '<Root>/ENV'
                                         */
-  uint8_T GC_Mode;                     /* Expression: uint8(3)
-                                        * Referenced by: '<Root>/GC'
+  uint8_T MAP_Mode;                    /* Expression: uint8(3)
+                                        * Referenced by: '<Root>/MAP'
                                         */
   uint8_T Constant_Value;              /* Computed Parameter: Constant_Value
                                         * Referenced by: '<Root>/Constant'
@@ -263,9 +246,9 @@ struct tag_RTM_leveller_T {
       time_T sfcnPeriod[1];
       time_T sfcnOffset[1];
       int_T sfcnTsMap[1];
-      struct _ssPortOutputs outputPortInfo[4];
-      struct _ssOutPortUnit outputPortUnits[4];
-      struct _ssOutPortCoSimAttribute outputPortCoSimAttribute[4];
+      struct _ssPortOutputs outputPortInfo[2];
+      struct _ssOutPortUnit outputPortUnits[2];
+      struct _ssOutPortCoSimAttribute outputPortCoSimAttribute[2];
       uint_T attribs[3];
       mxArray *params[3];
     } Sfcn0;
@@ -285,13 +268,11 @@ struct tag_RTM_leveller_T {
       time_T sfcnPeriod[1];
       time_T sfcnOffset[1];
       int_T sfcnTsMap[1];
-      struct _ssPortInputs inputPortInfo[4];
-      struct _ssInPortUnit inputPortUnits[4];
-      struct _ssInPortCoSimAttribute inputPortCoSimAttribute[4];
+      struct _ssPortInputs inputPortInfo[2];
+      struct _ssInPortUnit inputPortUnits[2];
+      struct _ssInPortCoSimAttribute inputPortCoSimAttribute[2];
       real_T const *UPtrs0[128];
       real_T const *UPtrs1[128];
-      real_T const *UPtrs2[128];
-      real_T const *UPtrs3[1];
       uint_T attribs[3];
       mxArray *params[3];
     } Sfcn2;
@@ -362,10 +343,6 @@ extern B_leveller_T leveller_B;
 
 /* Block states (default storage) */
 extern DW_leveller_T leveller_DW;
-
-/* External data declarations for dependent source files */
-extern const uint8_T leveller_U8GND;   /* uint8_T ground */
-extern const uint32_T leveller_U32GND; /* uint32_T ground */
 
 /* Model entry point functions */
 extern void leveller_initialize(void);

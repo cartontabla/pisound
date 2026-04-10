@@ -149,12 +149,16 @@ void control_init(void)
                g_ctrl_map.count, CTRL_CONFIG_FILE);
 
         /* Initialize each param to its min_val so ctrl_in outputs are valid
-         * at startup (avoids MAP bounds = 0, mix = 0, etc.) */
+         * at startup. For inverted ranges (min > max), use max_val instead
+         * so the parameter starts at its musically-sensible high end
+         * (e.g. mix=1 = fully wet, not mix=0 = silent). */
         uint8_t inited[64] = {0};
         for (size_t i = 0; i < g_ctrl_map.count; i++) {
             uint32_t pid = g_ctrl_map.entries[i].param_id;
             if (pid < g_ctrl_apply.param_count && pid < 64 && !inited[pid]) {
-                float init_val = g_ctrl_map.entries[i].min_val;
+                float mn = g_ctrl_map.entries[i].min_val;
+                float mx = g_ctrl_map.entries[i].max_val;
+                float init_val = (mn <= mx) ? mn : mx;
                 ctrl_apply_set_immediate(&g_ctrl_apply, pid, init_val);
                 ctrl_in_set(pid, init_val);
                 inited[pid] = 1;

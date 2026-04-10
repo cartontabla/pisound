@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'leveller'.
  *
- * Model version                  : 1.26
+ * Model version                  : 1.31
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Apr  4 13:57:20 2026
+ * C/C++ source code generated on : Fri Apr 10 21:03:07 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: Intel->x86-64 (Windows64)
@@ -21,11 +21,6 @@
 
 /* Block parameters (default storage) */
 P_leveller_T leveller_P = {
-  /* Variable: Mix_rt
-   * Referenced by: '<Root>/Constant15'
-   */
-  1.0,
-
   /* Expression: 1e-12
    * Referenced by: '<Root>/ENV'
    */
@@ -37,17 +32,17 @@ P_leveller_T leveller_P = {
   0.02,
 
   /* Expression: 40
-   * Referenced by: '<Root>/GC'
+   * Referenced by: '<Root>/MAP'
    */
   40.0,
 
   /* Expression: -45
-   * Referenced by: '<Root>/GC'
+   * Referenced by: '<Root>/MAP'
    */
   -45.0,
 
   /* Expression: 1
-   * Referenced by: '<Root>/GC'
+   * Referenced by: '<Root>/MAP'
    */
   1.0,
 
@@ -96,31 +91,6 @@ P_leveller_T leveller_P = {
    */
   4.6566128752457969E-10,
 
-  /* Expression: -40
-   * Referenced by: '<Root>/Constant4'
-   */
-  -40.0,
-
-  /* Expression: 3
-   * Referenced by: '<Root>/Constant5'
-   */
-  3.0,
-
-  /* Expression: 0.06
-   * Referenced by: '<Root>/Constant3'
-   */
-  0.06,
-
-  /* Expression: 0.002
-   * Referenced by: '<Root>/Constant2'
-   */
-  0.002,
-
-  /* Expression: 2^31-1
-   * Referenced by: '<Root>/Gain2'
-   */
-  2.147483647E+9,
-
   /* Computed Parameter: SFunction_P1_Size
    * Referenced by: '<Root>/S-Function'
    */
@@ -150,6 +120,11 @@ P_leveller_T leveller_P = {
    * Referenced by: '<Root>/S-Function'
    */
   6.0,
+
+  /* Expression: 2^31-1
+   * Referenced by: '<Root>/Gain2'
+   */
+  2.147483647E+9,
 
   /* Expression: 2^31-1
    * Referenced by: '<Root>/Gain3'
@@ -197,7 +172,7 @@ P_leveller_T leveller_P = {
   1U,
 
   /* Expression: uint8(3)
-   * Referenced by: '<Root>/GC'
+   * Referenced by: '<Root>/MAP'
    */
   3U,
 

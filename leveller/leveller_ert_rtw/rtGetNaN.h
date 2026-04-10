@@ -7,9 +7,9 @@
  *
  * Code generated for Simulink model 'leveller'.
  *
- * Model version                  : 1.26
+ * Model version                  : 1.31
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Apr  4 13:57:20 2026
+ * C/C++ source code generated on : Fri Apr 10 21:03:07 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: Intel->x86-64 (Windows64)
