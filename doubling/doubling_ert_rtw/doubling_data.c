@@ -7,164 +7,83 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.8
+ * Model version                  : 1.9
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
+ * C/C++ source code generated on : Fri Apr 10 16:11:12 2026
  *
  * Target selection: ert.tlc
- * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
+ * Embedded hardware selection: ARM Compatible->ARM Cortex-A
  * Code generation objectives: Unspecified
  * Validation result: Not run
  */
 
 #include "doubling.h"
 
-/* Block parameters (default storage) */
-P_doubling_T doubling_P = {
-  /* Variable: Spread
-   * Referenced by: '<Root>/Gain_R_Spread'
-   */
-  0.0,
-
-  /* Expression: 0
-   * Referenced by: '<Root>/Delay_L'
-   */
-  0.0,
-
-  /* Computed Parameter: SFunction_P1_Size
-   * Referenced by: '<Root>/S-Function'
+/* Constant parameters (default storage) */
+const ConstP_doubling_T doubling_ConstP = {
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
    */
   { 1.0, 1.0 },
 
-  /* Expression: 48000
-   * Referenced by: '<Root>/S-Function'
+  /* Pooled Parameter (Expression: 48000)
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
    */
   48000.0,
 
-  /* Computed Parameter: SFunction_P2_Size
-   * Referenced by: '<Root>/S-Function'
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
    */
   { 1.0, 1.0 },
 
-  /* Expression: 128
-   * Referenced by: '<Root>/S-Function'
+  /* Pooled Parameter (Expression: 128)
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
    */
   128.0,
 
-  /* Computed Parameter: SFunction_P3_Size
-   * Referenced by: '<Root>/S-Function'
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/ctrl_out'
    */
   { 1.0, 1.0 },
 
-  /* Expression: 4
-   * Referenced by: '<Root>/S-Function'
+  /* Pooled Parameter (Expression: 4)
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/ctrl_out'
    */
   4.0,
 
-  /* Computed Parameter: pisound_in_P1_Size
-   * Referenced by: '<Root>/pisound_in'
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Pisound In'
+   *   '<Root>/pisound_out'
    */
   { 1.0, 1.0 },
 
-  /* Expression: 48000
-   * Referenced by: '<Root>/pisound_in'
+  /* Pooled Parameter (Expression: 0)
+   * Referenced by:
+   *   '<Root>/Pisound In'
+   *   '<Root>/pisound_out'
    */
-  48000.0,
-
-  /* Computed Parameter: pisound_in_P2_Size
-   * Referenced by: '<Root>/pisound_in'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 128
-   * Referenced by: '<Root>/pisound_in'
-   */
-  128.0,
-
-  /* Computed Parameter: pisound_in_P3_Size
-   * Referenced by: '<Root>/pisound_in'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 0
-   * Referenced by: '<Root>/pisound_in'
-   */
-  0.0,
-
-  /* Expression: 2147483647
-   * Referenced by: '<Root>/Gain_Out_L'
-   */
-  2.147483647E+9,
-
-  /* Expression: 2147483647
-   * Referenced by: '<Root>/Gain_Out_R'
-   */
-  2.147483647E+9,
-
-  /* Computed Parameter: SFunction1_P1_Size
-   * Referenced by: '<Root>/S-Function1'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 48000
-   * Referenced by: '<Root>/S-Function1'
-   */
-  48000.0,
-
-  /* Computed Parameter: SFunction1_P2_Size
-   * Referenced by: '<Root>/S-Function1'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 128
-   * Referenced by: '<Root>/S-Function1'
-   */
-  128.0,
-
-  /* Computed Parameter: SFunction1_P3_Size
-   * Referenced by: '<Root>/S-Function1'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 4
-   * Referenced by: '<Root>/S-Function1'
-   */
-  4.0,
-
-  /* Computed Parameter: pisound_out_P1_Size
-   * Referenced by: '<Root>/pisound_out'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 48000
-   * Referenced by: '<Root>/pisound_out'
-   */
-  48000.0,
-
-  /* Computed Parameter: pisound_out_P2_Size
-   * Referenced by: '<Root>/pisound_out'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 128
-   * Referenced by: '<Root>/pisound_out'
-   */
-  128.0,
-
-  /* Computed Parameter: pisound_out_P3_Size
-   * Referenced by: '<Root>/pisound_out'
-   */
-  { 1.0, 1.0 },
-
-  /* Expression: 0
-   * Referenced by: '<Root>/pisound_out'
-   */
-  0.0,
-
-  /* Computed Parameter: Gain_In_L_Gain
-   * Referenced by: '<Root>/Gain_In_L'
-   */
-  2147477711
+  0.0
 };
 
 /*

@@ -7,115 +7,88 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.8
+ * Model version                  : 1.9
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
+ * C/C++ source code generated on : Fri Apr 10 16:11:12 2026
  *
  * Target selection: ert.tlc
- * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
+ * Embedded hardware selection: ARM Compatible->ARM Cortex-A
  * Code generation objectives: Unspecified
  * Validation result: Not run
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "doubling.h"
-#include "doubling_private.h"
-#include "rtwtypes.h"
-#include "limits.h"
-#include "rt_nonfinite.h"
-#include "MW_raspi_init.h"
-#include "linuxTimeLogger.h"
-#include "MW_Pyserver_control.h"
-#include "linuxinitialize.h"
-#define UNUSED(x)                      x = x
-#define NAMELEN                        16
+#include <stddef.h>
+#include <stdio.h>            /* This example main program uses printf/fflush */
+#include "doubling.h"                  /* Model header file */
 
-/* Function prototype declaration*/
-void exitFcn(int sig);
-void *terminateTask(void *arg);
-void *baseRateTask(void *arg);
-void *subrateTask(void *arg);
-volatile boolean_T stopRequested = false;
-volatile boolean_T runModel = true;
-sem_t stopSem;
-sem_t baserateTaskSem;
-pthread_t schedulerThread;
-pthread_t baseRateThread;
-void *threadJoinStatus;
-int terminatingmodel = 0;
-void *baseRateTask(void *arg)
+/*
+ * Associating rt_OneStep with a real-time clock or interrupt service routine
+ * is what makes the generated code "real-time".  The function rt_OneStep is
+ * always associated with the base rate of the model.  Subrates are managed
+ * by the base rate from inside the generated code.  Enabling/disabling
+ * interrupts and floating point context switches are target specific.  This
+ * example code indicates where these should take place relative to executing
+ * the generated code step function.  Overrun behavior should be tailored to
+ * your application needs.  This example simply sets an error status in the
+ * real-time model and returns from rt_OneStep.
+ */
+void rt_OneStep(void);
+void rt_OneStep(void)
 {
-  runModel = (rtmGetErrorStatus(doubling_M) == (NULL)) && !rtmGetStopRequested
-    (doubling_M);
-  while (runModel) {
-    sem_wait(&baserateTaskSem);
-    doubling_step();
+  static boolean_T OverrunFlag = false;
 
-    /* Get model outputs here */
-    stopRequested = !((rtmGetErrorStatus(doubling_M) == (NULL)) &&
-                      !rtmGetStopRequested(doubling_M));
+  /* Disable interrupts here */
+
+  /* Check for overrun */
+  if (OverrunFlag) {
+    rtmSetErrorStatus(doubling_M, "Overrun");
+    return;
   }
 
-  runModel = 0;
-  terminateTask(arg);
-  pthread_exit((void *)0);
-  return NULL;
+  OverrunFlag = true;
+
+  /* Save FPU context here (if necessary) */
+  /* Re-enable timer or interrupt here */
+  /* Set model inputs here */
+
+  /* Step the model */
+  doubling_step();
+
+  /* Get model outputs here */
+
+  /* Indicate task complete */
+  OverrunFlag = false;
+
+  /* Disable interrupts here */
+  /* Restore FPU context here (if necessary) */
+  /* Enable interrupts here */
 }
 
-void exitFcn(int sig)
+/*
+ * The example main function illustrates what is required by your
+ * application code to initialize, execute, and terminate the generated code.
+ * Attaching rt_OneStep to a real-time clock is target specific. This example
+ * illustrates how you do this relative to initializing the model.
+ */
+int_T main(int_T argc, const char *argv[])
 {
-  UNUSED(sig);
-  rtmSetErrorStatus(doubling_M, "stopping the model");
-  runModel = 0;
-}
-
-void *terminateTask(void *arg)
-{
-  UNUSED(arg);
-  terminatingmodel = 1;
-
-  {
-    runModel = 0;
-  }
-
-  MW_killPyserver();
-  mwRaspiTerminate();
-
-  /* Terminate model */
-  doubling_terminate();
-  sem_post(&stopSem);
-  return NULL;
-}
-
-int main(int argc, char **argv)
-{
-  UNUSED(argc);
-  UNUSED(argv);
-  mwRaspiInit();
-  MW_launchPyserver();
-  rtmSetErrorStatus(doubling_M, 0);
+  /* Unused arguments */
+  (void)(argc);
+  (void)(argv);
 
   /* Initialize model */
   doubling_initialize();
 
-  /* Call RTOS Initialization function */
-  myRTOSInit(0.0026666666666666666, 0);
-
-  /* Wait for stop semaphore */
-  sem_wait(&stopSem);
-
-#if (MW_NUMBER_TIMER_DRIVEN_TASKS > 0)
-
-  {
-    int i;
-    for (i=0; i < MW_NUMBER_TIMER_DRIVEN_TASKS; i++) {
-      CHECK_STATUS(sem_destroy(&timerTaskSem[i]), 0, "sem_destroy");
-    }
+  /* Simulating the model step behavior (in non real-time) to
+   *  simulate model behavior at stop time.
+   */
+  while (rtmGetErrorStatus(doubling_M) == (NULL)&& !rtmGetStopRequested
+         (doubling_M)) {
+    rt_OneStep();
   }
 
-#endif
-
+  /* Terminate model */
+  doubling_terminate();
   return 0;
 }
 

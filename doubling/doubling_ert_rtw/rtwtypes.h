@@ -7,12 +7,12 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.8
+ * Model version                  : 1.9
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
+ * C/C++ source code generated on : Fri Apr 10 16:11:12 2026
  *
  * Target selection: ert.tlc
- * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
+ * Embedded hardware selection: ARM Compatible->ARM Cortex-A
  * Code generation objectives: Unspecified
  * Validation result: Not run
  */
@@ -36,46 +36,6 @@ typedef void * pointer_T;
 #ifndef true
 #define true                           (1U)
 #endif
-#endif
-
-#ifndef INT64_T
-#define INT64_T
-
-typedef long int64_T;
-
-#define MAX_int64_T                    ((int64_T)(9223372036854775807L))
-#define MIN_int64_T                    ((int64_T)(-9223372036854775807L-1L))
-#endif
-
-#ifndef UINT64_T
-#define UINT64_T
-
-typedef unsigned long uint64_T;
-
-#define MAX_uint64_T                   ((uint64_T)(0xFFFFFFFFFFFFFFFFUL))
-#endif
-
-/*===========================================================================*
- * Additional complex number type definitions                                           *
- *===========================================================================*/
-#ifndef CINT64_T
-#define CINT64_T
-
-typedef struct {
-  int64_T re;
-  int64_T im;
-} cint64_T;
-
-#endif
-
-#ifndef CUINT64_T
-#define CUINT64_T
-
-typedef struct {
-  uint64_T re;
-  uint64_T im;
-} cuint64_T;
-
 #endif
 #endif                                 /* RTWTYPES_H */
 

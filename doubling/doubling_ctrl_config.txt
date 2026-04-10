@@ -18,12 +18,12 @@ midi|cc:74|0|1|80|mix
 # C2: delay base en ms
 midi|cc:71|8|35|80|delay_ms
 # C3: profundidad de modulación en ms
-midi|cc:52|0|8|80|mod_depth_ms
+midi|cc:52|0|12|80|mod_depth_ms
 # C4: velocidad de modulación en Hz
-midi|cc:91|0.1|3|80|mod_rate_hz
+midi|cc:91|0.1|5|80|mod_rate_hz
 
 # OSC mappings (same params, accessible via UDP port 9000)
 osc|/doubling/mix|0|1|80|mix
 osc|/doubling/delay_ms|8|35|80|delay_ms
-osc|/doubling/mod_depth_ms|0|8|80|mod_depth_ms
-osc|/doubling/mod_rate_hz|0.1|3|80|mod_rate_hz
+osc|/doubling/mod_depth_ms|0|12|80|mod_depth_ms
+osc|/doubling/mod_rate_hz|0.1|5|80|mod_rate_hz

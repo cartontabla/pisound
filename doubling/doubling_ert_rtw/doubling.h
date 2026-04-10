@@ -7,12 +7,12 @@
  *
  * Code generated for Simulink model 'doubling'.
  *
- * Model version                  : 1.8
+ * Model version                  : 1.9
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Mar 28 11:36:35 2026
+ * C/C++ source code generated on : Fri Apr 10 16:11:12 2026
  *
  * Target selection: ert.tlc
- * Embedded hardware selection: ARM Compatible->ARM Cortex-A (64-bit)
+ * Embedded hardware selection: ARM Compatible->ARM Cortex-A
  * Code generation objectives: Unspecified
  * Validation result: Not run
  */
@@ -24,30 +24,16 @@
 #include "rtwtypes.h"
 #include "simstruc.h"
 #include "fixedpoint.h"
+#include "rt_nonfinite.h"
+#include "math.h"
 #endif                                 /* doubling_COMMON_INCLUDES_ */
 
 #include "doubling_types.h"
+#include "rtGetNaN.h"
 #include <string.h>
 #include <stddef.h>
-#include "rt_nonfinite.h"
 
 /* Macros for accessing real-time model data structure */
-#ifndef rtmGetContTimeOutputInconsistentWithStateAtMajorStepFlag
-#define rtmGetContTimeOutputInconsistentWithStateAtMajorStepFlag(rtm) ((rtm)->CTOutputIncnstWithState)
-#endif
-
-#ifndef rtmSetContTimeOutputInconsistentWithStateAtMajorStepFlag
-#define rtmSetContTimeOutputInconsistentWithStateAtMajorStepFlag(rtm, val) ((rtm)->CTOutputIncnstWithState = (val))
-#endif
-
-#ifndef rtmGetDerivCacheNeedsReset
-#define rtmGetDerivCacheNeedsReset(rtm) ((rtm)->derivCacheNeedsReset)
-#endif
-
-#ifndef rtmSetDerivCacheNeedsReset
-#define rtmSetDerivCacheNeedsReset(rtm, val) ((rtm)->derivCacheNeedsReset = (val))
-#endif
-
 #ifndef rtmGetFinalTime
 #define rtmGetFinalTime(rtm)           ((rtm)->Timing.tFinal)
 #endif
@@ -58,14 +44,6 @@
 
 #ifndef rtmGetStepSize
 #define rtmGetStepSize(rtm)            ((rtm)->Timing.stepSize)
-#endif
-
-#ifndef rtmGetZCCacheNeedsReset
-#define rtmGetZCCacheNeedsReset(rtm)   ((rtm)->zCCacheNeedsReset)
-#endif
-
-#ifndef rtmSetZCCacheNeedsReset
-#define rtmSetZCCacheNeedsReset(rtm, val) ((rtm)->zCCacheNeedsReset = (val))
 #endif
 
 #ifndef rtmGet_TimeOfLastOutput
@@ -114,111 +92,93 @@
 
 /* Block signals (default storage) */
 typedef struct {
-  real_T SFunction_o1;                 /* '<Root>/S-Function' */
-  real_T SFunction_o2;                 /* '<Root>/S-Function' */
-  real_T SFunction_o3;                 /* '<Root>/S-Function' */
-  real_T SFunction_o4;                 /* '<Root>/S-Function' */
-  int32_T pisound_in_o1[128];          /* '<Root>/pisound_in' */
-  int32_T pisound_in_o2[128];          /* '<Root>/pisound_in' */
-  int32_T DTC_Out_L[128];              /* '<Root>/DTC_Out_L' */
-  int32_T DTC_Out_R[128];              /* '<Root>/DTC_Out_R' */
+  real_T sine[1024];
+  real_T w4[1024];
+  real_T w5[1024];
+  real_T CtrlIn_o1;                    /* '<Root>/Ctrl In' */
+  real_T CtrlIn_o2;                    /* '<Root>/Ctrl In' */
+  real_T CtrlIn_o3;                    /* '<Root>/Ctrl In' */
+  real_T CtrlIn_o4;                    /* '<Root>/Ctrl In' */
+  int32_T PisoundIn_o1[128];           /* '<Root>/Pisound In' */
+  int32_T PisoundIn_o2[128];           /* '<Root>/Pisound In' */
+  int32_T DataTypeConversion1[128];    /* '<Root>/Data Type Conversion1' */
+  int32_T DataTypeConversion3[128];    /* '<Root>/Data Type Conversion3' */
 } B_doubling_T;
 
 /* Block states (default storage) for system '<Root>' */
 typedef struct {
-  real_T Delay_L_DSTATE[128];          /* '<Root>/Delay_L' */
+  vco_mono_sys_doubling_T obj;         /* '<Root>/LFO' */
+  vcd_sys_doubling_T obj_l;            /* '<Root>/VCD' */
+  mix_sys_doubling_T obj_e;            /* '<Root>/MIX' */
+  uint32_T state_j[625];               /* '<Root>/LFO' */
 } DW_doubling_T;
 
-/* Parameters (default storage) */
-struct P_doubling_T_ {
-  real_T Spread;                       /* Variable: Spread
-                                        * Referenced by: '<Root>/Gain_R_Spread'
-                                        */
-  real_T Delay_L_InitialCondition;     /* Expression: 0
-                                        * Referenced by: '<Root>/Delay_L'
-                                        */
-  real_T SFunction_P1_Size[2];         /* Computed Parameter: SFunction_P1_Size
-                                        * Referenced by: '<Root>/S-Function'
-                                        */
-  real_T SFunction_P1;                 /* Expression: 48000
-                                        * Referenced by: '<Root>/S-Function'
-                                        */
-  real_T SFunction_P2_Size[2];         /* Computed Parameter: SFunction_P2_Size
-                                        * Referenced by: '<Root>/S-Function'
-                                        */
-  real_T SFunction_P2;                 /* Expression: 128
-                                        * Referenced by: '<Root>/S-Function'
-                                        */
-  real_T SFunction_P3_Size[2];         /* Computed Parameter: SFunction_P3_Size
-                                        * Referenced by: '<Root>/S-Function'
-                                        */
-  real_T SFunction_P3;                 /* Expression: 4
-                                        * Referenced by: '<Root>/S-Function'
-                                        */
-  real_T pisound_in_P1_Size[2];        /* Computed Parameter: pisound_in_P1_Size
-                                        * Referenced by: '<Root>/pisound_in'
-                                        */
-  real_T pisound_in_P1;                /* Expression: 48000
-                                        * Referenced by: '<Root>/pisound_in'
-                                        */
-  real_T pisound_in_P2_Size[2];        /* Computed Parameter: pisound_in_P2_Size
-                                        * Referenced by: '<Root>/pisound_in'
-                                        */
-  real_T pisound_in_P2;                /* Expression: 128
-                                        * Referenced by: '<Root>/pisound_in'
-                                        */
-  real_T pisound_in_P3_Size[2];        /* Computed Parameter: pisound_in_P3_Size
-                                        * Referenced by: '<Root>/pisound_in'
-                                        */
-  real_T pisound_in_P3;                /* Expression: 0
-                                        * Referenced by: '<Root>/pisound_in'
-                                        */
-  real_T Gain_Out_L_Gain;              /* Expression: 2147483647
-                                        * Referenced by: '<Root>/Gain_Out_L'
-                                        */
-  real_T Gain_Out_R_Gain;              /* Expression: 2147483647
-                                        * Referenced by: '<Root>/Gain_Out_R'
-                                        */
-  real_T SFunction1_P1_Size[2];        /* Computed Parameter: SFunction1_P1_Size
-                                        * Referenced by: '<Root>/S-Function1'
-                                        */
-  real_T SFunction1_P1;                /* Expression: 48000
-                                        * Referenced by: '<Root>/S-Function1'
-                                        */
-  real_T SFunction1_P2_Size[2];        /* Computed Parameter: SFunction1_P2_Size
-                                        * Referenced by: '<Root>/S-Function1'
-                                        */
-  real_T SFunction1_P2;                /* Expression: 128
-                                        * Referenced by: '<Root>/S-Function1'
-                                        */
-  real_T SFunction1_P3_Size[2];        /* Computed Parameter: SFunction1_P3_Size
-                                        * Referenced by: '<Root>/S-Function1'
-                                        */
-  real_T SFunction1_P3;                /* Expression: 4
-                                        * Referenced by: '<Root>/S-Function1'
-                                        */
-  real_T pisound_out_P1_Size[2];      /* Computed Parameter: pisound_out_P1_Size
-                                       * Referenced by: '<Root>/pisound_out'
-                                       */
-  real_T pisound_out_P1;               /* Expression: 48000
-                                        * Referenced by: '<Root>/pisound_out'
-                                        */
-  real_T pisound_out_P2_Size[2];      /* Computed Parameter: pisound_out_P2_Size
-                                       * Referenced by: '<Root>/pisound_out'
-                                       */
-  real_T pisound_out_P2;               /* Expression: 128
-                                        * Referenced by: '<Root>/pisound_out'
-                                        */
-  real_T pisound_out_P3_Size[2];      /* Computed Parameter: pisound_out_P3_Size
-                                       * Referenced by: '<Root>/pisound_out'
-                                       */
-  real_T pisound_out_P3;               /* Expression: 0
-                                        * Referenced by: '<Root>/pisound_out'
-                                        */
-  int32_T Gain_In_L_Gain;              /* Computed Parameter: Gain_In_L_Gain
-                                        * Referenced by: '<Root>/Gain_In_L'
-                                        */
-};
+/* Constant parameters (default storage) */
+typedef struct {
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
+   */
+  real_T CtrlIn_P1_Size[2];
+
+  /* Pooled Parameter (Expression: 48000)
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
+   */
+  real_T pooled2;
+
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
+   */
+  real_T CtrlIn_P2_Size[2];
+
+  /* Pooled Parameter (Expression: 128)
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/Pisound In'
+   *   '<Root>/ctrl_out'
+   *   '<Root>/pisound_out'
+   */
+  real_T pooled3;
+
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/ctrl_out'
+   */
+  real_T CtrlIn_P3_Size[2];
+
+  /* Pooled Parameter (Expression: 4)
+   * Referenced by:
+   *   '<Root>/Ctrl In'
+   *   '<Root>/ctrl_out'
+   */
+  real_T pooled4;
+
+  /* Pooled Parameter (Expression: )
+   * Referenced by:
+   *   '<Root>/Pisound In'
+   *   '<Root>/pisound_out'
+   */
+  real_T PisoundIn_P3_Size[2];
+
+  /* Pooled Parameter (Expression: 0)
+   * Referenced by:
+   *   '<Root>/Pisound In'
+   *   '<Root>/pisound_out'
+   */
+  real_T pooled5;
+} ConstP_doubling_T;
 
 /* Real-time Model Data Structure */
 struct tag_RTM_doubling_T {
@@ -354,14 +314,14 @@ struct tag_RTM_doubling_T {
   } Timing;
 };
 
-/* Block parameters (default storage) */
-extern P_doubling_T doubling_P;
-
 /* Block signals (default storage) */
 extern B_doubling_T doubling_B;
 
 /* Block states (default storage) */
 extern DW_doubling_T doubling_DW;
+
+/* Constant parameters (default storage) */
+extern const ConstP_doubling_T doubling_ConstP;
 
 /* Model entry point functions */
 extern void doubling_initialize(void);
@@ -370,14 +330,6 @@ extern void doubling_terminate(void);
 
 /* Real-time Model object */
 extern RT_MODEL_doubling_T *const doubling_M;
-extern volatile boolean_T stopRequested;
-extern volatile boolean_T runModel;
-
-/*-
- * These blocks were eliminated from the model due to optimizations:
- *
- * Block '<Root>/Gain_In_R' : Unused code path elimination
- */
 
 /*-
  * The generated code includes comments that allow you to trace directly
