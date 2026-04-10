@@ -196,14 +196,10 @@ int main(int argc, char **argv)
 
         /* --- Process --- */
 #ifdef ENABLE_CONTROL
-        control_process_rx();
+        control_audio_tick();
 #endif
 
         MODEL_STEP();
-
-#ifdef ENABLE_CONTROL
-        control_process_tx();
-#endif
 
         /* Interleave output */
         for (int i = 0; i < N; i++) {

@@ -18,6 +18,7 @@
 
 #ifdef ENABLE_CONTROL
 #include "control/control.h"
+#include "ctrl_in.h"
 #endif
 
 #ifndef MODEL_FRAME_LENGTH
@@ -33,11 +34,17 @@ jack_nframes_t g_frame_offset = 0;
 #include MODEL_HEADER
 
 /* Parameter Tuning Macros - Defaults do nothing */
-#ifndef PARAM_STRUCT_VAR
-#define PARAM_TUNING_ENABLED 0
+#if defined(PARAM_STRUCT_VAR)   || \
+    defined(PARAM_P1_LABEL)     || defined(PARAM_P2_LABEL) || \
+    defined(PARAM_P3_LABEL)     || defined(PARAM_P4_LABEL) || \
+    defined(PARAM_P5_LABEL)     || defined(PARAM_P6_LABEL) || \
+    defined(PARAM_P7_LABEL)     || defined(PARAM_P8_LABEL)
+  #define PARAM_TUNING_ENABLED 1
+  #ifdef PARAM_STRUCT_VAR
+    extern PARAM_STRUCT_TYPE PARAM_STRUCT_VAR;
+  #endif
 #else
-#define PARAM_TUNING_ENABLED 1
-extern PARAM_STRUCT_TYPE PARAM_STRUCT_VAR;
+  #define PARAM_TUNING_ENABLED 0
 #endif
 
 /* Global audio pointers */
@@ -135,14 +142,26 @@ int process(jack_nframes_t nframes, void *arg) {
       g_frame_offset = off;
 
 #ifdef ENABLE_CONTROL
-    control_process_rx();
-#endif
+    /* Sync ctrl_in slots → model parameters not wired via SFunction outputs.
+     * Use -DPARAM_P1_CTRL_INDEX=N (etc.) in compile_flags to activate. */
+    control_audio_tick();
+#if PARAM_TUNING_ENABLED
+  #ifdef PARAM_P1_CTRL_INDEX
+    set_p1(ctrl_in_get(PARAM_P1_CTRL_INDEX));
+  #endif
+  #ifdef PARAM_P2_CTRL_INDEX
+    set_p2(ctrl_in_get(PARAM_P2_CTRL_INDEX));
+  #endif
+  #ifdef PARAM_P3_CTRL_INDEX
+    set_p3(ctrl_in_get(PARAM_P3_CTRL_INDEX));
+  #endif
+  #ifdef PARAM_P4_CTRL_INDEX
+    set_p4(ctrl_in_get(PARAM_P4_CTRL_INDEX));
+  #endif
+#endif /* PARAM_TUNING_ENABLED */
+#endif /* ENABLE_CONTROL */
 
     MODEL_STEP();
-
-#ifdef ENABLE_CONTROL
-    control_process_tx();
-#endif
   }
   return 0;
 }
@@ -150,6 +169,9 @@ int process(jack_nframes_t nframes, void *arg) {
 int main(int argc, char **argv) {
   (void)argc;
   (void)argv;
+
+  /* Force line-buffered stdout so printf output appears immediately over SSH */
+  setvbuf(stdout, NULL, _IOLBF, 0);
 
   jack_client_t *client;
   jack_status_t status;
@@ -181,14 +203,6 @@ int main(int argc, char **argv) {
 
   jack_set_process_callback(client, process, ports);
 
-  if (jack_activate(client))
-    return 1;
-
-  jack_connect(client, "system:capture_1", jack_port_name(ports[0]));
-  jack_connect(client, "system:capture_2", jack_port_name(ports[1]));
-  jack_connect(client, jack_port_name(ports[2]), "system:playback_1");
-  jack_connect(client, jack_port_name(ports[3]), "system:playback_2");
-
   jack_nframes_t jack_buf = jack_get_buffer_size(client);
   printf("JACK buffer size = %u\n", (unsigned)jack_buf);
 
@@ -197,9 +211,16 @@ int main(int argc, char **argv) {
 #ifdef ENABLE_CONTROL
   control_init();
 #endif
+
+  if (jack_activate(client))
+    return 1;
+
+  jack_connect(client, "system:capture_1", jack_port_name(ports[0]));
+  jack_connect(client, "system:capture_2", jack_port_name(ports[1]));
+  jack_connect(client, jack_port_name(ports[2]), "system:playback_1");
+  jack_connect(client, jack_port_name(ports[3]), "system:playback_2");
     
 #if PARAM_TUNING_ENABLED && defined(PARAM_FS_MEMBER)
-  jack_nframes_t jack_sr = jack_get_sample_rate(client);
   PARAM_STRUCT_VAR.PARAM_FS_MEMBER = (double)jack_sr;
   printf("Injected Fs = %u Hz from JACK\n", (unsigned)jack_sr);
 #endif
@@ -214,18 +235,26 @@ int main(int argc, char **argv) {
   signal(SIGINT, sigint_handler);
 
   fd_set readfds;
+  int stdin_active = 1;
   while (keep_running) {
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = 100000;
 
     FD_ZERO(&readfds);
-    FD_SET(STDIN_FILENO, &readfds);
+    if (stdin_active) {
+      FD_SET(STDIN_FILENO, &readfds);
+    }
 
-    int ret = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &tv);
-    if (ret > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+    int ret = select(STDIN_FILENO + 1, stdin_active ? &readfds : NULL, NULL, NULL, &tv);
+    if (stdin_active && ret > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
       char line[64];
-      if (fgets(line, sizeof(line), stdin)) {
+      if (!fgets(line, sizeof(line), stdin)) {
+        /* EOF/error in non-interactive runs: disable stdin commands, keep DSP running. */
+        stdin_active = 0;
+        continue;
+      }
+      {
         if (line[0] == 'q') {
           keep_running = 0;
           continue;
@@ -248,6 +277,25 @@ int main(int argc, char **argv) {
               if (sscanf(line + L + 1, "%f", &val) == 1) {
                 g_params[i].set(val);
                 printf("%s set to %.4f\n", g_params[i].label, val);
+#ifdef ENABLE_CONTROL
+                /* Sync ctrl_in/ctrl_apply so the ctrl_in→param bridge
+                 * doesn't immediately overwrite this text-input value. */
+                switch (i) {
+                  #ifdef PARAM_P1_CTRL_INDEX
+                  case 0: control_set_param(PARAM_P1_CTRL_INDEX, val); break;
+                  #endif
+                  #ifdef PARAM_P2_CTRL_INDEX
+                  case 1: control_set_param(PARAM_P2_CTRL_INDEX, val); break;
+                  #endif
+                  #ifdef PARAM_P3_CTRL_INDEX
+                  case 2: control_set_param(PARAM_P3_CTRL_INDEX, val); break;
+                  #endif
+                  #ifdef PARAM_P4_CTRL_INDEX
+                  case 3: control_set_param(PARAM_P4_CTRL_INDEX, val); break;
+                  #endif
+                  default: break;
+                }
+#endif
               }
               handled = 1;
               break;

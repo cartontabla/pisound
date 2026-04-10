@@ -28,8 +28,12 @@
 #define DEFAULT_SAMPLE_RATE 48000.0
 #define DEFAULT_BUFFER_SIZE 128
 
-/* 24-bit audio scaling factors */
-#define SCALE_INT32_TO_24BIT 2147483647.0f /* 2^31 - 1 */
+/* Scaling: use 2^31 consistently with pisound_out.
+ * Clamp positive input below 1.0f to avoid int32 overflow UB:
+ * 2147483647.0f rounds to 2147483648.0f in float32, so we use the
+ * largest representable float32 strictly less than 1.0 (0x1.fffffep-1f). */
+#define SCALE_TO_INT32      2147483648.0f  /* 2^31 */
+#define POSITIVE_CLIP_LIMIT 0x1.fffffep-1f /* largest float32 < 1.0 (~0.9999999404) */
 
 static void mdlInitializeSizes(SimStruct *S) {
   ssSetNumSFcnParams(S, 3); /* Rate, Buffer, Backend (kept for compatibility) */
@@ -81,7 +85,7 @@ static void mdlInitializeSampleTimes(SimStruct *S) {
 }
 
 static void mdlStart(SimStruct *S) {
-  /* No initialization needed - handled by custom_main.c */
+  (void)S; /* No initialization needed - handled by custom_main.c */
 }
 
 static void mdlOutputs(SimStruct *S, int_T tid) {
@@ -99,13 +103,13 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
       float val_l = g_jack_in_l[g_frame_offset + i];
       float val_r = g_jack_in_r[g_frame_offset + i];
 
-      if (val_l > 1.0f)  val_l = 1.0f;
-      if (val_l < -1.0f) val_l = -1.0f;
-      if (val_r > 1.0f)  val_r = 1.0f;
-      if (val_r < -1.0f) val_r = -1.0f;
+      if (val_l > POSITIVE_CLIP_LIMIT) val_l = POSITIVE_CLIP_LIMIT;
+      if (val_l < -1.0f)              val_l = -1.0f;
+      if (val_r > POSITIVE_CLIP_LIMIT) val_r = POSITIVE_CLIP_LIMIT;
+      if (val_r < -1.0f)              val_r = -1.0f;
 
-      outL[i] = (int32_T)(val_l * SCALE_INT32_TO_24BIT);
-      outR[i] = (int32_T)(val_r * SCALE_INT32_TO_24BIT);
+      outL[i] = (int32_T)(val_l * SCALE_TO_INT32);
+      outR[i] = (int32_T)(val_r * SCALE_TO_INT32);
     }
   } else {
     /* Silence */

@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
 
 /* ---- Compile-time defaults ---------------------------------------- */
 
@@ -63,6 +65,14 @@
 
 #ifndef CTRL_FRAME_SIZE
 #define CTRL_FRAME_SIZE 128
+#endif
+
+#ifndef CONTROL_OSC_RX_IN_AUDIO_THREAD
+#define CONTROL_OSC_RX_IN_AUDIO_THREAD 0
+#endif
+
+#ifndef CONTROL_OSC_TX_IN_AUDIO_THREAD
+#define CONTROL_OSC_TX_IN_AUDIO_THREAD 0
 #endif
 
 static const char *g_tx_paths[CTRL_OSC_TX_NUM] = {
@@ -111,6 +121,17 @@ static midi_proto_ctx_t   g_midi_proto;
 static ctrl_map_table_t   g_ctrl_map;
 static ctrl_apply_ctx_t   g_ctrl_apply;
 static ctrl_event_queue_t g_ctrl_queue;
+static pthread_mutex_t    g_ctrl_queue_mu = PTHREAD_MUTEX_INITIALIZER;
+static pthread_t          g_ctrl_rx_thread;
+static pthread_t          g_ctrl_tx_thread;
+static int                g_ctrl_threads_running = 0;
+static int                g_ctrl_rx_thread_started = 0;
+static int                g_ctrl_tx_thread_started = 0;
+
+static void control_poll_inputs_once(void);
+static void control_send_outputs_once(void);
+static void *control_rx_thread_main(void *arg);
+static void *control_tx_thread_main(void *arg);
 
 /* -------------------------------------------------------------------- */
 
@@ -126,6 +147,19 @@ void control_init(void)
     } else {
         printf("control: loaded %zu mappings from '%s'\n",
                g_ctrl_map.count, CTRL_CONFIG_FILE);
+
+        /* Initialize each param to its min_val so ctrl_in outputs are valid
+         * at startup (avoids MAP bounds = 0, mix = 0, etc.) */
+        uint8_t inited[64] = {0};
+        for (size_t i = 0; i < g_ctrl_map.count; i++) {
+            uint32_t pid = g_ctrl_map.entries[i].param_id;
+            if (pid < g_ctrl_apply.param_count && pid < 64 && !inited[pid]) {
+                float init_val = g_ctrl_map.entries[i].min_val;
+                ctrl_apply_set_immediate(&g_ctrl_apply, pid, init_val);
+                ctrl_in_set(pid, init_val);
+                inited[pid] = 1;
+            }
+        }
     }
 
     if (midi_io_init(&g_midi, CTRL_MIDI_PORT) != 0) {
@@ -137,16 +171,32 @@ void control_init(void)
     load_tx_config(CTRL_TX_CONFIG_FILE);
     if (g_osc_tx_nips > 0) {
         osc_proto_init(g_osc_tx_ips[0], g_osc_tx_port);
-        for (int i = 1; i < g_osc_tx_nips; i++)
+        for (int i = 1; i < g_osc_tx_nips; i++) {
             udp_io_add_dest(g_osc_tx_ips[i], g_osc_tx_port);
+        }
     }
     osc_server_start(9000);
 #endif
+
+    g_ctrl_threads_running = 1;
+    if (pthread_create(&g_ctrl_rx_thread, NULL, control_rx_thread_main, NULL) == 0) {
+        g_ctrl_rx_thread_started = 1;
+    } else {
+        fprintf(stderr, "control: failed to start RX thread\n");
+        g_ctrl_threads_running = 0;
+    }
+
+    if (g_ctrl_threads_running &&
+        pthread_create(&g_ctrl_tx_thread, NULL, control_tx_thread_main, NULL) == 0) {
+        g_ctrl_tx_thread_started = 1;
+    } else if (g_ctrl_threads_running) {
+        fprintf(stderr, "control: failed to start TX thread\n");
+    }
 }
 
 /* -------------------------------------------------------------------- */
 
-void control_process_rx(void)
+static void control_poll_inputs_once(void)
 {
     /* 1. Drain MIDI bytes from ALSA into proto parser */
     if (g_midi) {
@@ -168,13 +218,15 @@ void control_process_rx(void)
                     ctrl_event_t evt;
                     midi_proto_to_event(&msg, &evt);
                     evt.param_id = mapping->param_id;
+                    pthread_mutex_lock(&g_ctrl_queue_mu);
                     ctrl_event_enqueue(&g_ctrl_queue, &evt);
+                    pthread_mutex_unlock(&g_ctrl_queue_mu);
                 }
             }
         }
     }
 
-#ifdef ENABLE_OSC
+#if defined(ENABLE_OSC) && CONTROL_OSC_RX_IN_AUDIO_THREAD
     /* 2b. Drain incoming OSC packets → look up mapping → enqueue events */
     {
         char osc_path[64];
@@ -186,15 +238,28 @@ void control_process_rx(void)
                 evt.param_id = mapping->param_id;
                 evt.value    = osc_val;   /* sender uses [0,1] normalized */
                 evt.mode     = CTRL_MODE_ABSOLUTE;
+                pthread_mutex_lock(&g_ctrl_queue_mu);
                 ctrl_event_enqueue(&g_ctrl_queue, &evt);
+                pthread_mutex_unlock(&g_ctrl_queue_mu);
             }
         }
     }
 #endif
+}
 
+void control_audio_tick(void)
+{
     /* 3. Apply queued events to ctrl_apply (sets targets + ramp params) */
     ctrl_event_t evt;
-    while (ctrl_event_dequeue(&g_ctrl_queue, &evt) == 0) {
+    for (;;) {
+        int has_evt;
+        pthread_mutex_lock(&g_ctrl_queue_mu);
+        has_evt = (ctrl_event_dequeue(&g_ctrl_queue, &evt) == 0);
+        pthread_mutex_unlock(&g_ctrl_queue_mu);
+        if (!has_evt) {
+            break;
+        }
+
         if (evt.param_id < (uint32_t)g_ctrl_map.count) {
             ctrl_apply_event(&g_ctrl_apply, &evt,
                              &g_ctrl_map.entries[evt.param_id]);
@@ -213,7 +278,7 @@ void control_process_rx(void)
 
 /* -------------------------------------------------------------------- */
 
-void control_process_tx(void)
+static void control_send_outputs_once(void)
 {
 #ifdef ENABLE_OSC
     /* Throttle to ~30 Hz (128/48000 ≈ 2.67ms per frame, every 12 frames ≈ 32ms) */
@@ -227,10 +292,53 @@ void control_process_tx(void)
 #endif
 }
 
+static void *control_rx_thread_main(void *arg)
+{
+    (void)arg;
+
+    while (g_ctrl_threads_running) {
+        control_poll_inputs_once();
+        usleep(1000);
+    }
+
+    return NULL;
+}
+
+static void *control_tx_thread_main(void *arg)
+{
+    (void)arg;
+
+    while (g_ctrl_threads_running) {
+        control_send_outputs_once();
+        usleep(2667);
+    }
+
+    return NULL;
+}
+
+/* -------------------------------------------------------------------- */
+
+void control_set_param(uint32_t param_id, float val)
+{
+    ctrl_apply_set_immediate(&g_ctrl_apply, param_id, val);
+    ctrl_in_set(param_id, val);
+}
+
 /* -------------------------------------------------------------------- */
 
 void control_shutdown(void)
 {
+    g_ctrl_threads_running = 0;
+
+    if (g_ctrl_rx_thread_started) {
+        pthread_join(g_ctrl_rx_thread, NULL);
+        g_ctrl_rx_thread_started = 0;
+    }
+    if (g_ctrl_tx_thread_started) {
+        pthread_join(g_ctrl_tx_thread, NULL);
+        g_ctrl_tx_thread_started = 0;
+    }
+
 #ifdef ENABLE_OSC
     osc_server_stop();
 #endif
