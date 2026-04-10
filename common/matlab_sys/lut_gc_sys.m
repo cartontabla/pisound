@@ -35,7 +35,7 @@ classdef lut_gc_sys < matlab.System
 
     % Para modo 3 (exp/gate suave): suelo de ganancia en dB
     Floor_dB = -80;
-..
+
     % LUT de usuario (modo 4)
     % IMPORTANTE: para codegen conviene tamaño fijo. Aquí se fija a M.
     XUser = linspace(-80, 10, 257);   % [1 x M]

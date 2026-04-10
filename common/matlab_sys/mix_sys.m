@@ -68,8 +68,8 @@ classdef mix_sys < matlab.System
 
       a_ = obj.a;
 
-      gd_is_scalar = (numel(gd_t) == 1);
-      gw_is_scalar = (numel(gw_t) == 1);
+      gd_is_scalar = (isscalar(gd_t));
+      gw_is_scalar = (isscalar(gw_t));
 
       gd1_ = obj.gd1; gd2_ = obj.gd2;
       gw1_ = obj.gw1; gw2_ = obj.gw2;

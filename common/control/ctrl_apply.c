@@ -58,9 +58,11 @@ void ctrl_apply_event(ctrl_apply_ctx_t *ctx, const ctrl_event_t *evt,
         target_val = (evt->value > 0.5f) ? mapping->max_val : mapping->min_val;
     }
     
-    /* Clamp */
-    if (target_val < mapping->min_val) target_val = mapping->min_val;
-    if (target_val > mapping->max_val) target_val = mapping->max_val;
+    /* Clamp — handles both normal (min<max) and inverted (min>max) ranges */
+    float lo = mapping->min_val < mapping->max_val ? mapping->min_val : mapping->max_val;
+    float hi = mapping->min_val < mapping->max_val ? mapping->max_val : mapping->min_val;
+    if (target_val < lo) target_val = lo;
+    if (target_val > hi) target_val = hi;
     
     p->target_val = target_val;
     

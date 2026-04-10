@@ -257,13 +257,16 @@ def _run_gatttool_notify(mac, midi_fd):
         print("\n[bridge] Stopped.")
 
 
-def main():
-    mac = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_MAC.upper()
+RECONNECT_DELAY = 5  # seconds between reconnect attempts
 
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    bus    = dbus.SystemBus()
-    loop   = GLib.MainLoop()
 
+def _connect_once(bus, mac):
+    """
+    One connection attempt: scan if needed → connect → GATT notify.
+    Returns normally on clean disconnect.
+    Raises SystemExit(1) on fatal errors (no adapter, bad MAC after scan).
+    """
+    loop = GLib.MainLoop()
     midi_fd = open_virmidi()
 
     # -----------------------------------------------------------------------
@@ -276,6 +279,7 @@ def main():
         adapter_path = _find_adapter_path(bus)
         if not adapter_path:
             print("ERROR: no Bluetooth adapter found", file=sys.stderr)
+            midi_fd.close()
             sys.exit(1)
 
         adapter = dbus.Interface(
@@ -305,9 +309,9 @@ def main():
 
         dev_path = _find_device_path(bus, mac)
         if not dev_path:
-            print(f"ERROR: {mac} not found during scan.", file=sys.stderr)
+            print(f"[bridge] {mac} not found during scan — will retry.", file=sys.stderr)
             midi_fd.close()
-            sys.exit(1)
+            return  # non-fatal: device may be out of range, retry later
 
     # -----------------------------------------------------------------------
     # 2. Connect and wait for ServicesResolved
@@ -344,21 +348,21 @@ def main():
         try:
             device.Connect()
         except dbus.exceptions.DBusException as e:
-            print(f"ERROR: Connect() failed — {e}", file=sys.stderr)
+            print(f"[bridge] Connect() failed — {e} — will retry.", file=sys.stderr)
             midi_fd.close()
-            sys.exit(1)
+            return  # non-fatal: retry
 
         GLib.timeout_add(20000, conn_loop.quit)
         conn_loop.run()
 
     if not resolved[0]:
-        print("ERROR: GATT services not resolved within timeout.", file=sys.stderr)
+        print("[bridge] GATT services not resolved — will retry.", file=sys.stderr)
         try:
             device.Disconnect()
         except Exception:
             pass
         midi_fd.close()
-        sys.exit(1)
+        return  # non-fatal: retry
 
     print("[bridge] Services resolved.")
 
@@ -378,6 +382,29 @@ def main():
         except Exception:
             pass
         _run_gatttool_notify(mac, midi_fd)
+
+
+def main():
+    mac = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_MAC.upper()
+
+    # D-Bus main loop must be set up once before any dbus calls
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    bus = dbus.SystemBus()
+
+    while True:
+        try:
+            _connect_once(bus, mac)
+        except KeyboardInterrupt:
+            print("\n[bridge] Stopped by user.")
+            break
+        except SystemExit:
+            raise  # fatal (e.g. no adapter) — propagate
+        except Exception as e:
+            print(f"[bridge] Unexpected error: {e} — retrying in {RECONNECT_DELAY}s.",
+                  file=sys.stderr)
+
+        print(f"[bridge] Reconnecting in {RECONNECT_DELAY}s…")
+        time.sleep(RECONNECT_DELAY)
 
 
 if __name__ == "__main__":
