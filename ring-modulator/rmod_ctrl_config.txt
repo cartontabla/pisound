@@ -1,0 +1,9 @@
+midi|cc:74|0.25|1|50|Depth
+midi|cc:71|10|1200|0|Rate
+midi|cc:52|0.5|2|0|Gain
+midi|cc:93|0|1|50|Mix
+
+osc|/rmod/depth|0.25|1|50|Depth
+osc|/rmod/rate|10|1200|0|Rate
+osc|/rmod/gain|0.5|2|0|Gain
+osc|/rmod/mix|0|1|50|Mix
