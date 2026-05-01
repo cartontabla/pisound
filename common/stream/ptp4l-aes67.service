@@ -1,0 +1,14 @@
+[Unit]
+Description=Pisound AES67 PTP4L
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/pisound-aes67
+ExecStart=/usr/local/bin/pisound_ptp4l_aes67
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

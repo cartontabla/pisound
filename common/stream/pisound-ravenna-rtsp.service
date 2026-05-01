@@ -1,0 +1,24 @@
+[Unit]
+Description=Pisound RAVENNA RTSP Session Server
+After=network-online.target aes67-daemon.service
+Wants=network-online.target aes67-daemon.service
+
+[Service]
+Type=simple
+User=patch
+WorkingDirectory=/home/patch/pisound
+ExecStart=/usr/bin/python3 /home/patch/pisound/common/stream/pisound_ravenna_rtsp_server.py \
+  --api-base http://127.0.0.1:8090 \
+  --bind-host 0.0.0.0 \
+  --bind-port 8554 \
+  --session-name Pisound_Out \
+  --sample-rate 48000 \
+  --channels 2 \
+  --multicast-port 5004 \
+  --payload-type 98 \
+  --ttl 15
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

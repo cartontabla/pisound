@@ -1,0 +1,21 @@
+# amp2_ctrl_config.txt
+# Vulcan XL inspired amp simulator — control mapping
+#
+# param_id asignado por orden de línea (MIDI y OSC comparten id si mismo nombre)
+# Oxygen 25 knobs: C1=CC74, C2=CC71, C3=CC52, C4=CC91, C7=CC12, C8=CC6
+
+midi|cc:74|0|30|20|drive
+midi|cc:71|0|0.5|0|character
+midi|cc:52|0|1|0|sag
+midi|cc:91|-12|12|50|bass
+midi|cc:12|-12|12|50|mid
+midi|cc:6|-12|12|50|treble
+
+osc|/amp2/drive|0|30|20|drive
+osc|/amp2/character|0|0.5|0|character
+osc|/amp2/sag|0|1|0|sag
+osc|/amp2/bass|-12|12|50|bass
+osc|/amp2/mid|-12|12|50|mid
+osc|/amp2/treble|-12|12|50|treble
+osc|/amp2/master|0|1|0|master
+osc|/amp2/bypass|0|1|0|bypass

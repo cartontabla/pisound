@@ -1,0 +1,18 @@
+[Unit]
+Description=Pisound AES67/RAVENNA Runtime
+Documentation=/home/patch/pisound/common/stream/PATCHBOX_BOOTSTRAP.md
+Wants=aes67-daemon.service
+Wants=ptp4l-aes67.service
+Wants=phc2sys-aes67.service
+Wants=pisound-ravenna-http.service
+Wants=pisound-ravenna-rtsp.service
+Wants=pisound-aes67-sessions.service
+After=aes67-daemon.service
+After=ptp4l-aes67.service
+After=phc2sys-aes67.service
+After=pisound-ravenna-http.service
+After=pisound-ravenna-rtsp.service
+After=pisound-aes67-sessions.service
+
+[Install]
+WantedBy=multi-user.target

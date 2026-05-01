@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pisound RAVENNA Bridge</title>
+  <style>
+    :root {
+      --bg: #f4f1e8;
+      --panel: #fffdf8;
+      --ink: #1f2328;
+      --muted: #5d6470;
+      --line: #d7cfbf;
+      --accent: #0b6e4f;
+      --accent-2: #b84d24;
+      --shadow: rgba(24, 28, 33, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(11, 110, 79, 0.10), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(184, 77, 36, 0.10), transparent 32%),
+        var(--bg);
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+    .hero {
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      line-height: 1.05;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 780px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 18px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 22px var(--shadow);
+    }
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #f7f3ea;
+      font-weight: 600;
+    }
+    .badge::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #808892;
+    }
+    .badge.active::before { background: var(--accent); }
+    .badge.inactive::before { background: var(--accent-2); }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: var(--ink);
+    }
+    button.secondary {
+      background: #ece6d7;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button.start { background: var(--accent); }
+    button.stop { background: var(--accent-2); }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 14px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: var(--muted);
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font: inherit;
+    }
+    textarea {
+      width: 100%;
+      min-height: 440px;
+      resize: vertical;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #16181c;
+      color: #e6edf3;
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      textarea { min-height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Pisound RAVENNA Bridge</h1>
+      <p>Frontend local y simple para arrancar, parar, configurar y observar el backend del host sin tocar a mano los scripts de <code>common/stream</code>.</p>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="status-bar">
+          <div id="statusBadge" class="badge inactive">Loading…</div>
+          <div class="small" id="statusDetail"></div>
+        </div>
+
+        <div class="controls">
+          <button class="start" onclick="saveConfigAnd('start')">Start</button>
+          <button class="secondary" onclick="runAction('wait')">Wait</button>
+          <button class="stop" onclick="runAction('stop')">Stop</button>
+          <button class="secondary" onclick="saveConfigAnd('restart')">Restart</button>
+          <button class="secondary" onclick="reloadAll()">Refresh</button>
+        </div>
+
+        <div class="meta" id="configPath"></div>
+
+        <div class="form-grid" id="configGrid"></div>
+
+        <div class="controls" style="margin-top: 14px;">
+          <button class="secondary" onclick="saveConfig()">Save Config</button>
+          <button class="secondary" onclick="loadConfig()">Reload Config</button>
+          <button class="secondary" onclick="loadLogs()">Show Logs</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="status-bar">
+          <strong>Backend Output</strong>
+          <span class="small">status + logs + command output</span>
+        </div>
+        <textarea id="console" readonly></textarea>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const fields = [
+      ["INPUT_DEVICE", "Input Device"],
+      ["OUTPUT_DEVICE", "Output Device"],
+      ["INPUT_START_CHANNEL", "Input Start"],
+      ["OUTPUT_START_CHANNEL", "Output Start"],
+      ["NETWORK_INTERFACE", "Network Iface"],
+      ["TX_DESTINATION", "TX Destination"],
+      ["TX_PORT", "TX Port"],
+      ["RX_PORT", "RX Port"],
+      ["SAMPLE_RATE", "Sample Rate"],
+      ["BLOCK_SIZE", "Block Size"],
+      ["CHANNELS", "Channels"],
+      ["PAYLOAD_TYPE", "Payload Type"],
+      ["SESSION_NAME", "Session Name"],
+      ["TX_SESSION_NAME", "TX Session"],
+      ["RX_SESSION_NAME", "RX Session"],
+      ["PI_SOURCE_NAME", "Pi Source Name"],
+      ["PI_API_BASE", "Pi API Base"],
+      ["RX_REQUIRE_DELAY_FRAMES", "RX Delay Frames"],
+      ["TX_TIMESTAMP_OFFSET_FRAMES", "TX TS Offset"]
+    ];
+
+    const grid = document.getElementById("configGrid");
+    const consoleEl = document.getElementById("console");
+    const inputs = {};
+
+    for (const [key, label] of fields) {
+      const wrapper = document.createElement("div");
+      const labelEl = document.createElement("label");
+      labelEl.textContent = label;
+      labelEl.htmlFor = key;
+      const input = document.createElement("input");
+      input.id = key;
+      inputs[key] = input;
+      wrapper.appendChild(labelEl);
+      wrapper.appendChild(input);
+      grid.appendChild(wrapper);
+    }
+
+    function appendConsole(text) {
+      if (!text) return;
+      consoleEl.value += text;
+      if (!text.endsWith("\n")) consoleEl.value += "\n";
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    async function apiGet(path) {
+      const response = await fetch(path);
+      return response.json();
+    }
+
+    async function apiPost(path, payload) {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {})
+      });
+      return response.json();
+    }
+
+    async function loadConfig() {
+      const data = await apiGet("/api/config");
+      document.getElementById("configPath").textContent = "Config: " + data.path;
+      for (const [key] of fields) {
+        inputs[key].value = data.config[key] || "";
+      }
+    }
+
+    async function refreshStatus() {
+      const data = await apiGet("/api/status");
+      const badge = document.getElementById("statusBadge");
+      badge.textContent = data.active ? "Bridge active" : "Bridge inactive";
+      badge.className = "badge " + (data.active ? "active" : "inactive");
+      const detail = [];
+      detail.push("tracked PID: " + (data.tracked_pid || "-"));
+      detail.push("live PID(s): " + ((data.live_pids || []).join(" ") || "-"));
+      document.getElementById("statusDetail").textContent = detail.join(" | ");
+      if (data.stderr) appendConsole(data.stderr);
+    }
+
+    async function saveConfig() {
+      const config = {};
+      for (const [key] of fields) {
+        config[key] = inputs[key].value;
+      }
+      const data = await apiPost("/api/config", { config });
+      appendConsole(data.stdout || data.stderr || "");
+      await refreshStatus();
+      return data.ok;
+    }
+
+    async function runAction(action) {
+      const data = await apiPost("/api/" + action, {});
+      appendConsole(data.stdout || "");
+      appendConsole(data.stderr || "");
+      await refreshStatus();
+      return data.ok;
+    }
+
+    async function saveConfigAnd(action) {
+      const ok = await saveConfig();
+      if (ok) await runAction(action);
+    }
+
+    async function loadLogs() {
+      const data = await apiGet("/api/logs?lines=120");
+      appendConsole(data.stdout || "");
+      appendConsole(data.stderr || "");
+    }
+
+    async function reloadAll() {
+      await loadConfig();
+      await refreshStatus();
+      await loadLogs();
+    }
+
+    reloadAll();
+  </script>
+</body>
+</html>

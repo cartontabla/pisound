@@ -1,0 +1,11 @@
+# Canonical stream_in/stream_out build for AES67/RAVENNA on the Pi.
+#
+# The validated bridge-side timing now lives on the Mac host side:
+# - tx packet time = 1 ms
+# - tx timestamp offset = 480 frames
+# - RX on the Mac stays muted until PTP is calibrated
+#
+# So this flags file stays focused on the model/backend contract only.
+-DSTREAM_MODE
+-DPORTABLE_WORDSIZES
+-DSTREAM_BACKEND_DEFAULT_ALSA=1

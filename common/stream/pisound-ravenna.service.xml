@@ -1,0 +1,20 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">Pisound</name>
+
+  <service protocol="ipv4">
+    <type>_http._tcp</type>
+    <subtype>_ravenna._sub._http._tcp</subtype>
+    <subtype>_ravenna_session._sub._http._tcp</subtype>
+    <port>8080</port>
+    <txt-record>device=Pisound</txt-record>
+    <txt-record>tx_stream=Pisound_Out</txt-record>
+    <txt-record>rx_stream=Pisound_In</txt-record>
+    <txt-record>tx_addr=239.69.67.1</txt-record>
+    <txt-record>tx_port=5004</txt-record>
+    <txt-record>rx_addr=239.69.67.2</txt-record>
+    <txt-record>rx_port=5006</txt-record>
+    <txt-record>audio=L24/48000/2</txt-record>
+  </service>
+</service-group>

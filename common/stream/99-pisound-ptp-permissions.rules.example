@@ -1,0 +1,8 @@
+# Allow PipeWire AES67 running in the user session to access PHC devices.
+# Install as /etc/udev/rules.d/99-pisound-ptp-permissions.rules and reload udev.
+#
+# The default package state on Patchbox exposed /dev/ptp0 as root:root 0600,
+# which prevented `pipewire-aes67` started by user `patch` from opening the PHC.
+#
+# Adjust the group if your deployment uses something other than `audio`.
+KERNEL=="ptp[0-9]*", GROUP="audio", MODE="0660"

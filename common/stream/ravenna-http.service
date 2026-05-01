@@ -1,0 +1,14 @@
+[Unit]
+Description=Pisound RAVENNA HTTP Metadata Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server 8080 --directory /etc/pisound/ravenna
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+

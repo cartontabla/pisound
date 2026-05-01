@@ -1,0 +1,29 @@
+[Unit]
+Description=Restore Pisound AES67 Sessions
+After=network-online.target aes67-daemon.service
+Wants=network-online.target aes67-daemon.service
+PartOf=aes67-daemon.service
+
+[Service]
+Type=simple
+User=patch
+WorkingDirectory=/home/patch/pisound
+EnvironmentFile=-/etc/default/pisound-aes67-sessions
+ExecStart=/usr/bin/python3 /home/patch/pisound/common/stream/pisound_aes67_sessions.py \
+  --api-base ${PISOUND_AES67_API_BASE} \
+  --tx-name ${PISOUND_AES67_TX_NAME} \
+  --rx-name ${PISOUND_AES67_RX_NAME} \
+  --rx-address ${PISOUND_AES67_RX_ADDRESS} \
+  --payload-type ${PISOUND_AES67_PAYLOAD_TYPE} \
+  --channels ${PISOUND_AES67_CHANNELS} \
+  --max-samples-per-packet ${PISOUND_AES67_MAX_SAMPLES_PER_PACKET} \
+  --delay ${PISOUND_AES67_DELAY} \
+  --discover-timeout ${PISOUND_AES67_DISCOVER_TIMEOUT} \
+  --discover-interval ${PISOUND_AES67_DISCOVER_INTERVAL} \
+  --watch \
+  --watch-interval ${PISOUND_AES67_WATCH_INTERVAL}
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

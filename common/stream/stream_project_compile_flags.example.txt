@@ -1,0 +1,25 @@
+# Copy this file to <project>/<project>_compile_flags.txt for any model that
+# uses stream_in.c / stream_out.c.
+#
+# The compile script already selects the stream heads when:
+# - you pass --stream, or
+# - this flags file contains -DSTREAM_MODE
+#
+# Keep every compile-time choice for stream-based projects in the project-local
+# <project>_compile_flags.txt so the project is portable and installable.
+
+-DSTREAM_MODE
+-DPORTABLE_WORDSIZES
+
+# Pick exactly one backend default for stream_main / stream_backend.
+# Canonical deployment on Patchbox / Pi:
+# - `xxx_app` runs under `pisound-stream-ravenna@.service`
+# - `stream_in/out` see only the ALSA device exposed by RAVENNA
+-DSTREAM_BACKEND_DEFAULT_ALSA=1
+
+# Optional alternatives for lab/debug use only.
+# Do not use these as the default for deployed RAVENNA projects:
+# -DSTREAM_BACKEND_DEFAULT_VIRTUAL_ALSA=1
+# -DSTREAM_BACKEND_DEFAULT_UDP=1
+# -DSTREAM_RX_PORT_DEFAULT=15010
+# -DSTREAM_TX_PORT_DEFAULT=15011

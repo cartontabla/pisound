@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">Pisound_Out</name>
+
+  <service protocol="ipv4">
+    <type>_rtsp._tcp</type>
+    <subtype>_ravenna_session._sub._rtsp._tcp</subtype>
+    <port>8554</port>
+  </service>
+</service-group>

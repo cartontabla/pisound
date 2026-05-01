@@ -3,12 +3,15 @@ set -euo pipefail
 
 if [ $# -lt 1 ]; then
   echo "Usage: $0 <ProjectName> [--stream]"
+  echo "  <ProjectName>_compile_flags.txt is the single source of truth for"
+  echo "  per-project compile-time flags in both pisound and stream modes."
   exit 1
 fi
 
 PROJECT="$1"
 # --stream puede venir como argumento O declararse en el flags file con -DSTREAM_MODE
 STREAM_MODE=0
+HYBRID_MODE=0
 for arg in "$@"; do
   [ "$arg" = "--stream" ] && STREAM_MODE=1
 done
@@ -50,29 +53,63 @@ MODEL_SRC="${RTW_DIR}/${PROJECT}.c"
 DATA_SRC="${RTW_DIR}/${PROJECT}_data.c"
 NONFINITE_SRC="${RTW_DIR}/rt_nonfinite.c"
 
+MODEL_HAS_PISOUND=0
+MODEL_HAS_STREAM=0
+if [ -f "${MODEL_SRC}" ]; then
+  grep -Eq 'pisound_in|pisound_out' "${MODEL_SRC}" && MODEL_HAS_PISOUND=1 || true
+  grep -Eq 'stream_in|stream_out' "${MODEL_SRC}" && MODEL_HAS_STREAM=1 || true
+fi
+if [ "${MODEL_HAS_PISOUND}" -eq 1 ] && [ "${MODEL_HAS_STREAM}" -eq 1 ]; then
+  HYBRID_MODE=1
+  STREAM_MODE=1
+fi
+
 # R2025b+ genera rtGetNaN.c y rtGetInf.c como archivos separados
 EXTRA_SRCS=()
 [ -f "${RTW_DIR}/rtGetNaN.c" ] && EXTRA_SRCS+=("${RTW_DIR}/rtGetNaN.c")
 [ -f "${RTW_DIR}/rtGetInf.c" ] && EXTRA_SRCS+=("${RTW_DIR}/rtGetInf.c")
 
-if [ "$STREAM_MODE" -eq 1 ]; then
+if [ "$HYBRID_MODE" -eq 1 ]; then
+  MAIN_SRC="${COMMON_DIR}/pisound_main.c"
+  PISOUND_IN="${COMMON_DIR}/pisound_in.c"
+  PISOUND_OUT="${COMMON_DIR}/pisound_out.c"
+  STREAM_IN_SRC="${COMMON_DIR}/stream_in.c"
+  STREAM_OUT_SRC="${COMMON_DIR}/stream_out.c"
+  echo "Mode: hybrid (Pisound/JACK + AES67/ALSA)"
+  echo "Using mixed heads: pisound_in.c / pisound_out.c + stream_in.c / stream_out.c"
+elif [ "$STREAM_MODE" -eq 1 ]; then
   MAIN_SRC="${COMMON_DIR}/stream_main.c"
   PISOUND_IN="${COMMON_DIR}/stream_in.c"
   PISOUND_OUT="${COMMON_DIR}/stream_out.c"
+  STREAM_IN_SRC=""
+  STREAM_OUT_SRC=""
   echo "Mode: stream (AES67/ALSA)"
+  echo "Using stream heads: stream_in.c / stream_out.c"
 else
   MAIN_SRC="${COMMON_DIR}/custom_main.c"
   PISOUND_IN="${COMMON_DIR}/pisound_in.c"
   PISOUND_OUT="${COMMON_DIR}/pisound_out.c"
+  STREAM_IN_SRC=""
+  STREAM_OUT_SRC=""
   echo "Mode: pisound (JACK)"
 fi
 CTRL_IN_SRC="${COMMON_DIR}/ctrl_in.c"
 CTRL_OUT_SRC="${COMMON_DIR}/ctrl_out.c"
+STREAM_RT_SRCS=()
+if [ "$STREAM_MODE" -eq 1 ]; then
+  STREAM_RT_SRCS+=("${COMMON_DIR}/stream/stream_contract.c")
+  STREAM_RT_SRCS+=("${COMMON_DIR}/stream/stream_backend.c")
+fi
+JACK_LIBS=()
+if [ "$STREAM_MODE" -eq 0 ] || [ "$HYBRID_MODE" -eq 1 ]; then
+  JACK_LIBS+=("-ljack")
+fi
 
 CTRL_DIR="${COMMON_DIR}/control"
 CTRL_SRCS=()
 EXTRA_DEFS=()
 EXTRA_FLAGS=()
+STREAM_ALSA_DEFAULT=0
 
 if [ -f "${FLAGS_FILE}" ]; then
   echo "Found configuration file: ${FLAGS_FILE}"
@@ -82,7 +119,6 @@ if [ -f "${FLAGS_FILE}" ]; then
     [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
     EXTRA_FLAGS+=("$line")
   done < "${FLAGS_FILE}"
-
 
   if [ -d "${CTRL_DIR}" ]; then
     if grep -Eq '^[[:space:]]*-DENABLE_CONTROL([[:space:]]*=|$)' "${FLAGS_FILE}"; then
@@ -112,6 +148,14 @@ if [ -f "${FLAGS_FILE}" ]; then
   fi
 fi
 
+if [ "$STREAM_MODE" -eq 1 ] && grep -Eq '^[[:space:]]*-DSTREAM_BACKEND_DEFAULT_ALSA([[:space:]]*=|$)' "${FLAGS_FILE}" 2>/dev/null; then
+  STREAM_ALSA_DEFAULT=1
+fi
+
+if [ ! -f "${FLAGS_FILE}" ]; then
+  echo "No ${PROJECT}_compile_flags.txt found; building with defaults only."
+fi
+
 # Auto-inyectar PARAM_STRUCT solo si hay PARAM_P*_LABEL declarados en el flags file
 # (sin labels no hay params tuneables por texto y el struct no se necesita)
 PARAM_DEFS=()
@@ -127,10 +171,12 @@ fi
 echo "Compiling ${PROJECT}..."
 
 gcc -o "${PROJECT_DIR}/${PROJECT}_app" \
-  "${MODEL_SRC}" "${DATA_SRC}" "${NONFINITE_SRC}" "${EXTRA_SRCS[@]}" \
+  "${MODEL_SRC}" "${DATA_SRC}" "${NONFINITE_SRC}" ${EXTRA_SRCS+"${EXTRA_SRCS[@]}"} \
   "${MAIN_SRC}" "${PISOUND_IN}" "${PISOUND_OUT}" \
+  ${STREAM_IN_SRC:+"${STREAM_IN_SRC}"} ${STREAM_OUT_SRC:+"${STREAM_OUT_SRC}"} \
+  ${STREAM_RT_SRCS+"${STREAM_RT_SRCS[@]}"} \
   "${CTRL_IN_SRC}" "${CTRL_OUT_SRC}" \
-  "${CTRL_SRCS[@]}" \
+  ${CTRL_SRCS+"${CTRL_SRCS[@]}"} \
   -I"${PROJECT_DIR}" -I"${RTW_DIR}" -I"${COMMON_DIR}" -I"${CTRL_DIR}" \
   -DMODEL_HEADER="\"${PROJECT}.h\"" \
   -DMODEL_INITIALIZE=${PROJECT}_initialize \
@@ -139,12 +185,15 @@ gcc -o "${PROJECT_DIR}/${PROJECT}_app" \
   -DMODEL_FRAME_LENGTH=128 \
   -DMODEL_RT_TYPE=RT_MODEL_${PROJECT}_T \
   -DMODEL_RT_PTR=${PROJECT}_M \
-  "${PARAM_DEFS[@]}" \
-  "${EXTRA_FLAGS[@]}" \
-  $([ "$STREAM_MODE" -eq 0 ] && echo "-ljack") \
+  ${PARAM_DEFS+"${PARAM_DEFS[@]}"} \
+  ${EXTRA_FLAGS+"${EXTRA_FLAGS[@]}"} \
+  ${JACK_LIBS+"${JACK_LIBS[@]}"} \
   -lasound -lpthread -lm -lrt -O3
 
 echo "Build SUCCESS: ${PROJECT_DIR}/${PROJECT}_app"
+
+# Remove stale generated wrappers from previous builds before recreating them.
+rm -f "${PROJECT_DIR}/${PROJECT}_app_bin" "${PROJECT_DIR}/${PROJECT}_app_real"
 
 # --- BLE MIDI wrapper (opt-in via -DBLE_MIDI in flags file)
 if grep -Eq '^[[:space:]]*-DBLE_MIDI([[:space:]]*=|$)' "${FLAGS_FILE}" 2>/dev/null; then
@@ -163,7 +212,7 @@ if grep -Eq '^[[:space:]]*-DBLE_MIDI([[:space:]]*=|$)' "${FLAGS_FILE}" 2>/dev/nu
   grep -Eq '^[[:space:]]*-DENABLE_OSC([[:space:]]*=|$)' "${FLAGS_FILE}" 2>/dev/null && BLE_ONLY=0
 
   # Rename real binary
-  mv "${PROJECT_DIR}/${PROJECT}_app" "${PROJECT_DIR}/${PROJECT}_app_bin"
+  mv "${PROJECT_DIR}/${PROJECT}_app" "${PROJECT_DIR}/${PROJECT}_app_real"
 
   # Generate transparent wrapper
   cat > "${PROJECT_DIR}/${PROJECT}_app" << WRAPPER
@@ -184,14 +233,8 @@ _ble_fail() {
     echo "[ble] No se detecta el adaptador USB Bluetooth. ¿Está conectado el dongle?" >&2
   elif echo "\$log" | grep -q "Connect() failed"; then
     echo "[ble] No se ha podido conectar. Prueba a encender y apagar el dispositivo BLE." >&2
-  elif echo "\$log" | grep -q "not found\|No module\|ModuleNotFoundError\|ImportError"; then
-    echo "[ble] Dependencias Python no instaladas. Ejecuta:" >&2
-    echo "[ble]   sudo apt install python3-dbus python3-gi" >&2
-  elif echo "\$log" | grep -q "Permission denied\|Operation not permitted"; then
-    echo "[ble] Sin permisos para acceder a BlueZ. ¿Está ejecutando con sudo?" >&2
   else
-    echo "[ble] El canal BLE no ha podido arrancar. Log:" >&2
-    echo "\$log" | head -5 | sed 's/^/[ble]   /' >&2
+    echo "[ble] El canal BLE no ha podido arrancar." >&2
   fi
   sudo kill \$BRIDGE_PID 2>/dev/null
   if [ "\$BLE_ONLY" -eq 1 ]; then
@@ -215,9 +258,9 @@ fi
 sudo python3 -u "${BRIDGE_PY}" ${BLE_MAC} < /dev/null > /tmp/ble_bridge.log 2>&1 &
 BRIDGE_PID=\$!
 
-for i in \$(seq 1 40); do
+for i in \$(seq 1 20); do
   grep -q "Running" /tmp/ble_bridge.log 2>/dev/null && break
-  grep -q "^ERROR:" /tmp/ble_bridge.log 2>/dev/null && break
+  grep -q "ERROR" /tmp/ble_bridge.log 2>/dev/null && break
   sleep 0.5
 done
 
@@ -230,28 +273,91 @@ fi
 # Connect VirMIDI → pisound-control once the app creates its ALSA port
 (for i in \$(seq 1 30); do
   ctrl_client=\$(aconnect -l 2>/dev/null | grep -m1 'pisound-control' | sed 's/client \([0-9]*\).*/\1/')
-  vir_client=\$(aconnect -l 2>/dev/null | grep -m1 'Virtual Raw MIDI' | sed 's/client \([0-9]*\).*/\1/')
-  if [ -n "\$ctrl_client" ] && [ -n "\$vir_client" ]; then
-    if aconnect "\${vir_client}:0" "\${ctrl_client}:0" 2>/tmp/ble_aconn.err; then
-      echo "[ble] VirMIDI connected to pisound-control (\${vir_client}:0 → \${ctrl_client}:0)."
-      exit
-    fi
-    if grep -q "already subscribed" /tmp/ble_aconn.err 2>/dev/null; then
-      echo "[ble] VirMIDI already connected to pisound-control (\${vir_client}:0 → \${ctrl_client}:0)."
-      exit
-    fi
+  if [ -n "\$ctrl_client" ]; then
+    aconnect 20:0 "\${ctrl_client}:0" 2>/dev/null && echo "[ble] VirMIDI connected to pisound-control." && exit
   fi
   sleep 0.5
 done
-echo "[ble] WARNING: VirMIDI → pisound-control routing failed." >&2
-[ -s /tmp/ble_aconn.err ] && echo "[ble]   aconnect error: \$(cat /tmp/ble_aconn.err)" >&2
-echo "[ble]   Manual fix: aconnect \"\$(aconnect -l | grep -m1 'Virtual Raw MIDI' | sed 's/client \([0-9]*\).*/\1/'):0\" \$(aconnect -l | grep -m1 'pisound-control' | sed 's/client \([0-9]*\).*/\1/'):0" >&2) &
+echo "[ble] WARNING: BLE conectado pero el rutado MIDI a pisound-control falló." >&2
+echo "[ble]          Ejecuta manualmente: aconnect 20:0 <client>:0" >&2) &
 
 trap 'sudo kill \$BRIDGE_PID 2>/dev/null' EXIT INT TERM
+
+exec "\${SCRIPT_DIR}/${PROJECT}_app_real" "\$@"
+WRAPPER
+
+  chmod +x "${PROJECT_DIR}/${PROJECT}_app"
+  echo "BLE MIDI wrapper generated (${PROJECT}_app → ${PROJECT}_app_real)"
+fi
+
+# --- Canonical RAVENNA runtime wrapper for stream/ALSA projects
+if [ "$STREAM_ALSA_DEFAULT" -eq 1 ]; then
+  APP_PATH="${PROJECT_DIR}/${PROJECT}_app"
+  APP_BIN="${PROJECT_DIR}/${PROJECT}_app_bin"
+
+  mv "${APP_PATH}" "${APP_BIN}"
+
+  cat > "${APP_PATH}" << WRAPPER
+#!/usr/bin/env bash
+# Auto-generated by compile.sh — do not edit
+set -euo pipefail
+
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+STARTED_RUNTIME=0
+SERVICE_TARGET="pisound-aes67-runtime.target"
+PROJECT_RUNTIME_ENV="\${SCRIPT_DIR}/${PROJECT}_ravenna.env"
+
+_run_systemctl() {
+  if [ "\$(id -u)" -eq 0 ]; then
+    systemctl "\$@"
+  else
+    sudo systemctl "\$@"
+  fi
+}
+
+_cleanup() {
+  local rc=\$?
+  if [ "\$STARTED_RUNTIME" -eq 1 ]; then
+    echo "[ravenna] Stopping \${SERVICE_TARGET}..."
+    _run_systemctl stop "\${SERVICE_TARGET}" >/dev/null 2>&1 || true
+  fi
+  exit \$rc
+}
+
+trap _cleanup EXIT INT TERM
+
+if systemctl is-active --quiet "\${SERVICE_TARGET}"; then
+  :
+else
+  echo "[ravenna] Starting \${SERVICE_TARGET}..."
+  _run_systemctl enable --now "\${SERVICE_TARGET}"
+  STARTED_RUNTIME=1
+fi
+
+if [ -f "\${PROJECT_RUNTIME_ENV}" ]; then
+  # shellcheck disable=SC1090
+  source "\${PROJECT_RUNTIME_ENV}"
+fi
+
+: "\${STREAM_BACKEND:=alsa}"
+: "\${STREAM_SAMPLE_FORMAT:=s32le}"
+: "\${STREAM_DEVICE:=hw:CARD=RAVENNA,DEV=0}"
+: "\${STREAM_CAPTURE_DEVICE:=\${STREAM_DEVICE}}"
+: "\${STREAM_PLAYBACK_DEVICE:=\${STREAM_DEVICE}}"
+
+export STREAM_BACKEND
+export STREAM_SAMPLE_FORMAT
+export STREAM_DEVICE
+export STREAM_CAPTURE_DEVICE
+export STREAM_PLAYBACK_DEVICE
+export STREAM_CAPTURE_HW_CHANNELS="\${STREAM_CAPTURE_HW_CHANNELS:-}"
+export STREAM_PLAYBACK_HW_CHANNELS="\${STREAM_PLAYBACK_HW_CHANNELS:-}"
+export STREAM_CAPTURE_MAP="\${STREAM_CAPTURE_MAP:-}"
+export STREAM_PLAYBACK_MAP="\${STREAM_PLAYBACK_MAP:-}"
 
 exec "\${SCRIPT_DIR}/${PROJECT}_app_bin" "\$@"
 WRAPPER
 
-  chmod +x "${PROJECT_DIR}/${PROJECT}_app"
-  echo "BLE MIDI wrapper generated (${PROJECT}_app → ${PROJECT}_app_bin)"
+  chmod +x "${APP_PATH}"
+  echo "RAVENNA runtime wrapper generated (${PROJECT}_app → ${PROJECT}_app_bin)"
 fi

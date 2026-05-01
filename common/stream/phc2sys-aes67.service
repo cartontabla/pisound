@@ -1,0 +1,14 @@
+[Unit]
+Description=Pisound AES67 PHC2SYS
+After=ptp4l-aes67.service
+Requires=ptp4l-aes67.service
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/pisound-aes67
+ExecStart=/usr/local/bin/pisound_phc2sys_aes67
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

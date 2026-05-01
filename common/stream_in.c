@@ -1,17 +1,13 @@
 /*
- * stream_in.c: S-Function for AES67 audio stream input
- * Part of the pisound framework — generic stream variant.
+ * stream_in.c: S-Function for generic streamed audio input.
  *
- * On Linux/embedded (Pi): reads from g_stream_in_l / g_stream_in_r,
- *   global float buffers filled each frame by custom_main.c via aes67-daemon.
- * In MATLAB simulation (MEX): outputs silence (zeros).
+ * The design goal is ALSA-like and transport-agnostic:
+ * stream_in reads the current capture period prepared by the backend.
+ * That backend may be backed by a virtual ALSA PCM, a RAVENNA/AES67 ALSA
+ * device, or a direct test transport, but stream_in should not care.
  *
- * Interface identical to pisound_in: 2 outputs, int32, frame-based.
- *
- * S-Function dialog parameters:
- *   [0] sample_rate  (e.g. 48000)
- *   [1] buffer_size  (e.g. 128)
- *   [2] (reserved, kept for compatibility with pisound_in)
+ * In MATLAB simulation (MEX): outputs silence.
+ * Interface remains identical to pisound_in: 2 outputs, int32, frame-based.
  */
 
 #define S_FUNCTION_NAME  stream_in
@@ -26,7 +22,7 @@
 #include <string.h>
 
 #if defined(__linux__) && !defined(MATLAB_MEX_FILE)
-#include "stream_audio.h"  /* g_stream_in_l, g_stream_in_r, g_stream_offset */
+#include "stream_audio.h"
 #endif
 
 /* Parameters */
@@ -91,10 +87,10 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     int32_T *outR   = (int32_T *)ssGetOutputPortSignal(S, 1);
 
 #if defined(__linux__) && !defined(MATLAB_MEX_FILE)
-    if (g_stream_in_l && g_stream_in_r) {
+    if (g_stream_capture_l && g_stream_capture_r) {
         for (int i = 0; i < buffer_size; i++) {
-            float vl = g_stream_in_l[g_stream_offset + i];
-            float vr = g_stream_in_r[g_stream_offset + i];
+            float vl = g_stream_capture_l[g_stream_offset + i];
+            float vr = g_stream_capture_r[g_stream_offset + i];
 
             if (vl >  1.0f) vl =  1.0f;
             if (vl < -1.0f) vl = -1.0f;

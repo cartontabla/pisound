@@ -5,6 +5,9 @@
 *.so
 *.mex*
 
+# Local build outputs
+build/
+
 # MATLAB/Simulink build artifacts (generated, not needed in repo)
 slprj/
 *.slxc
@@ -19,9 +22,29 @@ rtw_proj.tmw
 tmwinternal/
 tmp/
 *.mk
+/matlab.mat
 
 # Large binary images
 *.img
+
+# Local installers and vendored dependency checkouts
+*.dmg
+third_party/
+
+# Python local runtimes and caches
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+
+# Local runtime configuration
+*.env
+!*.env.example
+.runtime/
+*.log
+
+# Audio/editor analysis sidecars
+*.reapeaks
 
 # macOS
 .DS_Store
@@ -32,3 +55,6 @@ __MACOSX/
 *.swp
 *~
 .vscode/
+
+# Local Node runtime for macOS AES67 helpers
+node_modules/

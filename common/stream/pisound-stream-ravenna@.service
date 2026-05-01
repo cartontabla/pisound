@@ -1,0 +1,28 @@
+[Unit]
+Description=Pisound Stream App %i via RAVENNA
+After=network-online.target pisound-aes67-runtime.target
+Wants=network-online.target pisound-aes67-runtime.target
+PartOf=pisound-aes67-runtime.target
+
+[Service]
+Type=simple
+User=patch
+Group=patch
+WorkingDirectory=/home/patch/pisound/%i
+Environment=STREAM_BACKEND=alsa
+Environment=STREAM_SAMPLE_FORMAT=s32le
+Environment=STREAM_DEVICE=hw:CARD=RAVENNA,DEV=0
+Environment=STREAM_CAPTURE_DEVICE=hw:CARD=RAVENNA,DEV=0
+Environment=STREAM_PLAYBACK_DEVICE=hw:CARD=RAVENNA,DEV=0
+EnvironmentFile=-/home/patch/pisound/%i/%i_ravenna.env
+ExecStart=/home/patch/pisound/%i/%i_app
+Restart=on-failure
+RestartSec=2
+KillMode=control-group
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=89
+
+[Install]
+WantedBy=multi-user.target

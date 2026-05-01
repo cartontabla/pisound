@@ -1,17 +1,13 @@
 /*
- * stream_out.c: S-Function for AES67 audio stream output
- * Part of the pisound framework — generic stream variant.
+ * stream_out.c: S-Function for generic streamed audio output.
  *
- * On Linux/embedded (Pi): writes to g_stream_out_l / g_stream_out_r,
- *   global float buffers read each frame by custom_main.c via aes67-daemon.
- * In MATLAB simulation (MEX): no output (discards samples).
+ * The design goal is ALSA-like and transport-agnostic:
+ * stream_out writes the current playback period that the backend will consume.
+ * The backend may in turn be a virtual ALSA PCM, a RAVENNA/AES67 ALSA device,
+ * or a direct test transport, but stream_out should only see a PCM period.
  *
- * Interface identical to pisound_out: 2 inputs, int32, frame-based.
- *
- * S-Function dialog parameters:
- *   [0] sample_rate  (e.g. 48000)
- *   [1] buffer_size  (e.g. 128)
- *   [2] (reserved, kept for compatibility with pisound_out)
+ * In MATLAB simulation (MEX): samples are discarded.
+ * Interface remains identical to pisound_out: 2 inputs, int32, frame-based.
  */
 
 #define S_FUNCTION_NAME  stream_out
@@ -24,7 +20,7 @@
 #endif
 
 #if defined(__linux__) && !defined(MATLAB_MEX_FILE)
-#include "stream_audio.h"  /* g_stream_out_l, g_stream_out_r, g_stream_offset */
+#include "stream_audio.h"
 #endif
 
 /* Parameters */
@@ -92,10 +88,10 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     const int32_T *inR  = (const int32_T *)ssGetInputPortSignal(S, 1);
 
 #if defined(__linux__) && !defined(MATLAB_MEX_FILE)
-    if (g_stream_out_l && g_stream_out_r) {
+    if (g_stream_playback_l && g_stream_playback_r) {
         for (int i = 0; i < sig_size; i++) {
-            g_stream_out_l[g_stream_offset + i] = (float)inL[i] * SCALE_INT32_TO_FLOAT;
-            g_stream_out_r[g_stream_offset + i] = (float)inR[i] * SCALE_INT32_TO_FLOAT;
+            g_stream_playback_l[g_stream_offset + i] = (float)inL[i] * SCALE_INT32_TO_FLOAT;
+            g_stream_playback_r[g_stream_offset + i] = (float)inR[i] * SCALE_INT32_TO_FLOAT;
         }
     }
 #else
