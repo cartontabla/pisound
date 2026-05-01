@@ -197,15 +197,21 @@ Para preparar una Pi nueva:
 
 ```bash
 cd ~/pisound
-sudo common/scripts/deploy_aes67.sh        # ruta RAVENNA/AES67
-sudo common/scripts/check_pi_requirements.sh --install \
-  --project <proyecto> \
-  --flags <proyecto>/<proyecto>_compile_flags.txt \
-  --mode stream
+sudo common/scripts/prepare_project.sh <proyecto>
 ```
 
-Para proyectos Pisound/JACK puros, cambia `--mode stream` por `--mode pisound`.
-Para proyectos mixtos como `bypasscross`, usa `--mode hybrid`.
+`prepare_project.sh` detecta el modo desde el flags file y desde el codigo
+generado: `pisound`, `stream` o `hybrid`. Si el proyecto usa la ruta
+`RAVENNA/ALSA`, ejecuta el despliegue AES67 del framework; despues llama al
+preflight de requisitos con `--install`.
+
+Variantes utiles:
+
+```bash
+common/scripts/prepare_project.sh --check-only <proyecto>
+sudo common/scripts/prepare_project.sh --compile <proyecto>
+sudo common/scripts/prepare_project.sh --no-deploy <proyecto>
+```
 
 Ejemplo minimo real para un proyecto `stream`:
 

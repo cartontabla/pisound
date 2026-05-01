@@ -29,13 +29,16 @@ Sincroniza el repo y ejecuta:
 
 ```bash
 cd ~/pisound
-sudo common/scripts/deploy_aes67.sh
+sudo common/scripts/prepare_project.sh <proyecto>
 ```
 
-Eso prepara los paquetes de sistema necesarios y deja instalados los servicios
-del framework. Incluye compilador, ALSA, JACK, Python 3, DBus/GObject para BLE
-MIDI, BlueZ, linuxptp y Avahi. Si estas reconfigurando una Pi sin instalar
-paquetes, usa `--skip-apt`.
+Eso detecta si el proyecto es `pisound`, `stream` o `hybrid` leyendo el flags
+file y el codigo generado. Para proyectos `RAVENNA/ALSA`, tambien ejecuta el
+despliegue AES67 base.
+
+Prepara los paquetes de sistema necesarios y deja instalados los servicios del
+framework. Incluye compilador, ALSA, JACK, Python 3, DBus/GObject para BLE
+MIDI, BlueZ, linuxptp y Avahi.
 
 El despliegue instala:
 
@@ -49,17 +52,17 @@ El despliegue instala:
 - `/etc/default/pisound-aes67`
 - `/etc/default/pisound-aes67-sessions`
 
-Si quieres validar o reparar requisitos sin hacer todo el despliegue:
+Si quieres solo validar sin instalar:
 
 ```bash
-sudo common/scripts/check_pi_requirements.sh --install \
-  --project <proyecto> \
-  --flags <proyecto>/<proyecto>_compile_flags.txt \
-  --mode stream
+common/scripts/prepare_project.sh --check-only <proyecto>
 ```
 
-Usa `--mode pisound` para proyectos JACK/Pisound puros y `--mode hybrid` para
-proyectos que combinen Pisound, BLE MIDI y streaming.
+Si quieres preparar y compilar en una sola orden:
+
+```bash
+sudo common/scripts/prepare_project.sh --compile <proyecto>
+```
 
 ## Configuracion persistente
 
