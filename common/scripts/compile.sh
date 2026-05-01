@@ -70,6 +70,7 @@ EXTRA_SRCS=()
 [ -f "${RTW_DIR}/rtGetInf.c" ] && EXTRA_SRCS+=("${RTW_DIR}/rtGetInf.c")
 
 if [ "$HYBRID_MODE" -eq 1 ]; then
+  COMPILE_MODE="hybrid"
   MAIN_SRC="${COMMON_DIR}/pisound_main.c"
   PISOUND_IN="${COMMON_DIR}/pisound_in.c"
   PISOUND_OUT="${COMMON_DIR}/pisound_out.c"
@@ -78,6 +79,7 @@ if [ "$HYBRID_MODE" -eq 1 ]; then
   echo "Mode: hybrid (Pisound/JACK + AES67/ALSA)"
   echo "Using mixed heads: pisound_in.c / pisound_out.c + stream_in.c / stream_out.c"
 elif [ "$STREAM_MODE" -eq 1 ]; then
+  COMPILE_MODE="stream"
   MAIN_SRC="${COMMON_DIR}/stream_main.c"
   PISOUND_IN="${COMMON_DIR}/stream_in.c"
   PISOUND_OUT="${COMMON_DIR}/stream_out.c"
@@ -86,6 +88,7 @@ elif [ "$STREAM_MODE" -eq 1 ]; then
   echo "Mode: stream (AES67/ALSA)"
   echo "Using stream heads: stream_in.c / stream_out.c"
 else
+  COMPILE_MODE="pisound"
   MAIN_SRC="${COMMON_DIR}/custom_main.c"
   PISOUND_IN="${COMMON_DIR}/pisound_in.c"
   PISOUND_OUT="${COMMON_DIR}/pisound_out.c"
@@ -154,6 +157,15 @@ fi
 
 if [ ! -f "${FLAGS_FILE}" ]; then
   echo "No ${PROJECT}_compile_flags.txt found; building with defaults only."
+fi
+
+REQ_CHECK="${SCRIPT_DIR}/check_pi_requirements.sh"
+if [ "${PISOUND_SKIP_REQUIREMENTS_CHECK:-0}" != "1" ] && [ -x "${REQ_CHECK}" ]; then
+  if [ "$(uname -s)" = "Linux" ]; then
+    "${REQ_CHECK}" --project "${PROJECT}" --flags "${FLAGS_FILE}" --mode "${COMPILE_MODE}"
+  else
+    echo "[requirements] Skipping Pi requirement check on $(uname -s)."
+  fi
 fi
 
 # Auto-inyectar PARAM_STRUCT solo si hay PARAM_P*_LABEL declarados en el flags file
@@ -245,6 +257,25 @@ _ble_fail() {
   fi
 }
 
+_ble_cleanup() {
+  sudo kill "\${BRIDGE_PID:-}" 2>/dev/null || true
+  kill "\${ROUTE_PID:-}" 2>/dev/null || true
+}
+
+for cmd in python3 modprobe rfkill hciconfig aconnect; do
+  if ! command -v "\$cmd" >/dev/null 2>&1; then
+    echo "[ble] Falta requisito del framework: \$cmd." >&2
+    echo "[ble] Ejecuta: sudo common/scripts/check_pi_requirements.sh --install --project ${PROJECT} --flags ${FLAGS_FILE} --mode ${COMPILE_MODE}" >&2
+    exit 1
+  fi
+done
+
+if ! python3 -c 'import dbus, gi' >/dev/null 2>&1; then
+  echo "[ble] Faltan modulos Python para BLE MIDI: dbus/gi." >&2
+  echo "[ble] Ejecuta: sudo common/scripts/check_pi_requirements.sh --install --project ${PROJECT} --flags ${FLAGS_FILE} --mode ${COMPILE_MODE}" >&2
+  exit 1
+fi
+
 sudo modprobe snd-virmidi midi_devs=1 2>/dev/null
 
 # Pre-check: ensure hci0 is up
@@ -280,10 +311,13 @@ fi
 done
 echo "[ble] WARNING: BLE conectado pero el rutado MIDI a pisound-control falló." >&2
 echo "[ble]          Ejecuta manualmente: aconnect 20:0 <client>:0" >&2) &
+ROUTE_PID=\$!
 
-trap 'sudo kill \$BRIDGE_PID 2>/dev/null' EXIT INT TERM
+trap _ble_cleanup EXIT INT TERM
 
-exec "\${SCRIPT_DIR}/${PROJECT}_app_real" "\$@"
+"\${SCRIPT_DIR}/${PROJECT}_app_real" "\$@"
+APP_RC=\$?
+exit "\$APP_RC"
 WRAPPER
 
   chmod +x "${PROJECT_DIR}/${PROJECT}_app"
@@ -324,6 +358,27 @@ _cleanup() {
   exit \$rc
 }
 
+_warn_ravenna_holders() {
+  local active_units=""
+
+  if [ -z "\${INVOCATION_ID:-}" ] && command -v systemctl >/dev/null 2>&1; then
+    active_units=\$(systemctl list-units 'pisound-stream-ravenna@*.service' --state=active --no-legend --plain 2>/dev/null | awk '{print \$1}' || true)
+    if [ -n "\${active_units}" ]; then
+      echo "[ravenna] Hay servicios de proyecto activos que pueden estar usando RAVENNA:" >&2
+      echo "\${active_units}" | sed 's/^/[ravenna]   /' >&2
+      echo "[ravenna] Para ejecutar manualmente, para primero el servicio que corresponda:" >&2
+      echo "[ravenna]   sudo systemctl stop pisound-stream-ravenna@<proyecto>.service" >&2
+    fi
+  fi
+
+  if command -v fuser >/dev/null 2>&1; then
+    if fuser /dev/snd/* >/dev/null 2>&1; then
+      echo "[ravenna] Procesos usando dispositivos ALSA ahora mismo:" >&2
+      fuser -v /dev/snd/* 2>&1 | sed 's/^/[ravenna]   /' >&2 || true
+    fi
+  fi
+}
+
 trap _cleanup EXIT INT TERM
 
 if systemctl is-active --quiet "\${SERVICE_TARGET}"; then
@@ -354,6 +409,8 @@ export STREAM_CAPTURE_HW_CHANNELS="\${STREAM_CAPTURE_HW_CHANNELS:-}"
 export STREAM_PLAYBACK_HW_CHANNELS="\${STREAM_PLAYBACK_HW_CHANNELS:-}"
 export STREAM_CAPTURE_MAP="\${STREAM_CAPTURE_MAP:-}"
 export STREAM_PLAYBACK_MAP="\${STREAM_PLAYBACK_MAP:-}"
+
+_warn_ravenna_holders
 
 exec "\${SCRIPT_DIR}/${PROJECT}_app_bin" "\$@"
 WRAPPER

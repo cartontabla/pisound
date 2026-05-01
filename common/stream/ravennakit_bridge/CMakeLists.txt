@@ -39,6 +39,14 @@ if(PISOUND_RAVENNAKIT_BRIDGE_ENABLE_PORTAUDIO)
   target_link_libraries(pisound_ravennakit_bridge_core PRIVATE
     ${PORTAUDIO_LIBRARY}
   )
+  if(APPLE)
+    target_link_libraries(pisound_ravennakit_bridge_core PRIVATE
+      "-framework CoreAudio"
+      "-framework AudioUnit"
+      "-framework AudioToolbox"
+      "-framework CoreServices"
+    )
+  endif()
 else()
   target_sources(pisound_ravennakit_bridge_core PRIVATE
     src/portaudio_audio_driver.cpp

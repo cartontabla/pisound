@@ -341,10 +341,9 @@ class PortAudioDuplexDriver final : public IDuplexAudioDriver {
   int handle_output_callback(void* output, std::size_t frames) {
     if (callback_ == nullptr) {
       if (output != nullptr) {
-        auto** output_channels = static_cast<float**>(output);
-        for (std::size_t ch = 0; ch < output_channel_count_; ++ch) {
-          std::memset(output_channels[ch], 0, frames * sizeof(float));
-        }
+        auto* output_samples = static_cast<float*>(output);
+        std::memset(output_samples, 0,
+                    frames * output_channel_count_ * sizeof(float));
       }
       return paContinue;
     }

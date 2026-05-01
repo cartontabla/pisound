@@ -188,6 +188,24 @@ La regla para proyectos `stream` debe ser esta:
   `-DSTREAM_MODE` dentro de ese flags file;
 - no deberia haber flags de proyecto repartidos por servicios, wrappers o
   scripts ad hoc.
+- `compile.sh` lee ese flags file y ejecuta un preflight de requisitos en la
+  Pi antes de compilar; si falta `gcc`, `libasound2-dev`, JACK, Python/DBus
+  para BLE, o el runtime AES67, falla con una accion concreta en vez de crear
+  una app que luego no arranca.
+
+Para preparar una Pi nueva:
+
+```bash
+cd ~/pisound
+sudo common/scripts/deploy_aes67.sh        # ruta RAVENNA/AES67
+sudo common/scripts/check_pi_requirements.sh --install \
+  --project <proyecto> \
+  --flags <proyecto>/<proyecto>_compile_flags.txt \
+  --mode stream
+```
+
+Para proyectos Pisound/JACK puros, cambia `--mode stream` por `--mode pisound`.
+Para proyectos mixtos como `bypasscross`, usa `--mode hybrid`.
 
 Ejemplo minimo real para un proyecto `stream`:
 
@@ -273,10 +291,11 @@ Si la Raspberry o la distro nombran la interfaz de otra forma, por ejemplo
 `end0` o `enp1s0`, hay que cambiar ese valor y reiniciar:
 
 ```text
-systemctl restart ptp4l-aes67 phc2sys-aes67 pisound-aes67-bridge
+systemctl restart ptp4l-aes67 phc2sys-aes67 \
+  pisound-ravenna-http pisound-ravenna-rtsp pisound-aes67-sessions
 ```
 
-El problema no suele estar en `aes67_bridge` en si, sino en haber dejado
+El problema no suele estar en el modelo generado, sino en haber dejado
 `ptp4l/phc2sys` atados a `eth0` cuando la NIC real tiene otro nombre o expone
 otro PHC.
 
@@ -565,13 +584,14 @@ La regla de diseno es simple: `common/stream` debe reducir ALSA a un contrato
 pequeno, determinista y portable para que el backend pueda comportarse como un
 dispositivo virtual sin contaminarse con detalles del borde.
 
-## Estado actual en la Pi
+## Estado historico en la Pi
 
-Comprobado en `patch@patchbox.local` el 2026-04-17:
+Nota historica, no arquitectura objetivo vigente. Comprobado en
+`patch@patchbox.local` el 2026-04-17:
 
 - la Pi no esta usando hoy un stack `aes67_daemon + MergingALSA`;
 - no aparecen paquetes ni servicios `MergingALSA` ni `aes67_daemon`;
-- el camino desplegado ahora mismo es el bridge propio:
+- el camino desplegado en ese momento era el bridge propio:
   `pisound-aes67-bridge.service` + `ptp4l-aes67.service` +
   `phc2sys-aes67.service`;
 - las apps del modelo corren con `pisound-stream-app@.service` sobre
@@ -758,18 +778,19 @@ Consecuencia practica:
 - mientras no exista ese master externo, `aes67-daemon` puede arrancar, pero no
   llegara a streaming util sobre `eth0`.
 
-## Estado operativo despues del despliegue
+## Estado operativo observado despues del despliegue
 
-Tras estas pruebas, en `patchbox.local` quedan visibles dos caminos:
+Nota historica de migracion. Tras esas pruebas, en `patchbox.local` quedaban
+visibles dos caminos:
 
-- el camino antiguo con `pisound-aes67-bridge.service`, que sigue siendo el
+- el camino antiguo con `pisound-aes67-bridge.service`, usado entonces como
   fallback operativo;
 - el camino nuevo con `aes67-daemon.service` y la tarjeta ALSA `RAVENNA`,
   desplegado pero pendiente de un master PTP real para completar la migracion.
 
-El siguiente paso ya no es compilar ni instalar, sino validar la Pi conectada a
-una red AES67 con un grandmaster PTP externo y entonces mover `stream_in` y
-`stream_out` desde el bridge antiguo hacia `RAVENNA`.
+La arquitectura objetivo actual ya no depende de ese bridge directo: el
+framework prepara `aes67-daemon.service`, `RAVENNA` ALSA y
+`pisound-stream-ravenna@.service`.
 
 ## Servicio directo para `RAVENNA`
 
@@ -885,7 +906,7 @@ Consecuencia practica:
 - lo que sigue faltando para una topologia `solo Pi + Mac` es un grandmaster
   PTP real o una version/parche del lado Mac que permita `master`.
 
-Mientras tanto, la Pi se ha dejado restaurada al estado operativo anterior:
+En ese momento, la Pi se dejo restaurada al estado operativo anterior:
 
 - `ptp4l-aes67.service` activo;
 - `phc2sys-aes67.service` activo;
@@ -923,7 +944,9 @@ ya esta vivo a nivel de reloj, captura ALSA y emision RTP de retorno.
 En la Pi:
 
 ```bash
-sudo systemctl stop ptp4l-aes67 phc2sys-aes67 pisound-aes67-bridge
+sudo systemctl stop pisound-aes67-runtime.target \
+  ptp4l-aes67 phc2sys-aes67 \
+  pisound-ravenna-http pisound-ravenna-rtsp pisound-aes67-sessions
 sudo ptp4l -m -A -4 -S -i eth0 -i lo \
   --dscp_event=46 \
   --dscp_general=34 \

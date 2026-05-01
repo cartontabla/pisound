@@ -7,10 +7,11 @@ RUNTIME_DIR="${RAVENNAKIT_BRIDGE_RUNTIME_DIR:-${SCRIPT_DIR}/.runtime/ravennakit_
 PID_FILE="${RUNTIME_DIR}/bridge.pid"
 LOG_FILE="${RUNTIME_DIR}/bridge.log"
 BRIDGE_BASENAME="pisound_ravennakit_bridge"
+BRIDGE_PATTERN="[p]isound_ravennakit_bridge"
 
 mkdir -p "${RUNTIME_DIR}"
 
-EXISTING_PIDS="$(pgrep -x "${BRIDGE_BASENAME}" || true)"
+EXISTING_PIDS="$(pgrep -x "${BRIDGE_BASENAME}" 2>/dev/null || pgrep -f "${BRIDGE_PATTERN}" 2>/dev/null || true)"
 if [ -n "${EXISTING_PIDS}" ]; then
   echo "[mac-bridge] Refusing to start: existing bridge instance(s) detected:"
   echo "${EXISTING_PIDS}" | tr ' ' '\n'
@@ -29,7 +30,7 @@ if [ -f "${PID_FILE}" ]; then
 fi
 
 echo "[mac-bridge] Starting..."
-if command -v setsid >/dev/null 2>&1; then
+if [ "$(uname -s)" != "Darwin" ] && command -v setsid >/dev/null 2>&1; then
   setsid "${RUN_SCRIPT}" </dev/null >>"${LOG_FILE}" 2>&1 &
 else
   nohup "${RUN_SCRIPT}" </dev/null >>"${LOG_FILE}" 2>&1 &

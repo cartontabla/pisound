@@ -32,7 +32,12 @@ cd ~/pisound
 sudo common/scripts/deploy_aes67.sh
 ```
 
-Eso instala:
+Eso prepara los paquetes de sistema necesarios y deja instalados los servicios
+del framework. Incluye compilador, ALSA, JACK, Python 3, DBus/GObject para BLE
+MIDI, BlueZ, linuxptp y Avahi. Si estas reconfigurando una Pi sin instalar
+paquetes, usa `--skip-apt`.
+
+El despliegue instala:
 
 - `pisound-aes67-runtime.target`
 - `ptp4l-aes67.service`
@@ -40,9 +45,21 @@ Eso instala:
 - `pisound-ravenna-http.service`
 - `pisound-ravenna-rtsp.service`
 - `pisound-aes67-sessions.service`
-- `pisound-aes67-bridge.service` como herramienta opcional, no canónica
+- `pisound-stream-ravenna@.service`
 - `/etc/default/pisound-aes67`
 - `/etc/default/pisound-aes67-sessions`
+
+Si quieres validar o reparar requisitos sin hacer todo el despliegue:
+
+```bash
+sudo common/scripts/check_pi_requirements.sh --install \
+  --project <proyecto> \
+  --flags <proyecto>/<proyecto>_compile_flags.txt \
+  --mode stream
+```
+
+Usa `--mode pisound` para proyectos JACK/Pisound puros y `--mode hybrid` para
+proyectos que combinen Pisound, BLE MIDI y streaming.
 
 ## Configuracion persistente
 
@@ -69,6 +86,12 @@ Para la ruta final de streaming sobre la tarjeta `RAVENNA`, usa:
 common/scripts/compile.sh <proyecto>
 sudo common/scripts/start_ravenna_project.sh <proyecto>
 ```
+
+Antes de invocar `gcc`, `compile.sh` ejecuta una comprobacion de requisitos en
+la Pi segun los flags reales del proyecto. Si falta algo como `python3`,
+`python3-dbus`, `linuxptp`, `libasound2-dev` o el runtime AES67, falla con una
+accion concreta para instalarlo en vez de dejar un error opaco durante la
+compilacion o la ejecucion.
 
 Si quieres modo interactivo en primer plano, para salir con `q` o `Ctrl-C`:
 

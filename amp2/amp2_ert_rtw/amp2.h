@@ -9,7 +9,7 @@
  *
  * Model version                  : 1.15
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Apr 11 12:20:53 2026
+ * C/C++ source code generated on : Fri May  1 09:27:40 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex-A
@@ -100,8 +100,8 @@ typedef struct {
 /* Block states (default storage) for system '<S1>/CabHPF' */
 typedef struct {
   vcf_sys_amp2_T obj;                  /* '<S1>/CabHPF' */
-  real_T zL[2];                        /* '<S1>/CabHPF' */
   real_T zR[2];                        /* '<S1>/CabHPF' */
+  real_T zL[2];                        /* '<S1>/CabHPF' */
   boolean_T objisempty;                /* '<S1>/CabHPF' */
 } DW_CabHPF_amp2_T;
 
@@ -114,14 +114,14 @@ typedef struct {
 /* Block states (default storage) for system '<S3>/Stage2' */
 typedef struct {
   lut_ws_sys_amp2_T obj;               /* '<S3>/Stage2' */
-  real_T zDn2R[14];                    /* '<S3>/Stage2' */
   real_T zUp1L[14];                    /* '<S3>/Stage2' */
-  real_T zUp2R[14];                    /* '<S3>/Stage2' */
-  real_T zDn1R[14];                    /* '<S3>/Stage2' */
-  real_T zUp1R[14];                    /* '<S3>/Stage2' */
-  real_T zDn1L[14];                    /* '<S3>/Stage2' */
   real_T zDn2L[14];                    /* '<S3>/Stage2' */
+  real_T zUp2R[14];                    /* '<S3>/Stage2' */
+  real_T zUp1R[14];                    /* '<S3>/Stage2' */
+  real_T zDn2R[14];                    /* '<S3>/Stage2' */
+  real_T zDn1L[14];                    /* '<S3>/Stage2' */
   real_T zUp2L[14];                    /* '<S3>/Stage2' */
+  real_T zDn1R[14];                    /* '<S3>/Stage2' */
   boolean_T objisempty;                /* '<S3>/Stage2' */
 } DW_Stage2_amp2_T;
 

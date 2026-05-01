@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNTIME_DIR="${RAVENNAKIT_BRIDGE_RUNTIME_DIR:-${SCRIPT_DIR}/.runtime/ravennakit_bridge_mac}"
 PID_FILE="${RUNTIME_DIR}/bridge.pid"
 BRIDGE_BASENAME="pisound_ravennakit_bridge"
+BRIDGE_PATTERN="[p]isound_ravennakit_bridge"
 
 stop_pid() {
   local pid="$1"
@@ -41,7 +42,7 @@ if [ -f "${PID_FILE}" ]; then
   rm -f "${PID_FILE}"
 fi
 
-EXTRA_PIDS="$(pgrep -x "${BRIDGE_BASENAME}" || true)"
+EXTRA_PIDS="$(pgrep -x "${BRIDGE_BASENAME}" 2>/dev/null || pgrep -f "${BRIDGE_PATTERN}" 2>/dev/null || true)"
 if [ -n "${EXTRA_PIDS}" ]; then
   for pid in ${EXTRA_PIDS}; do
     stop_pid "${pid}" "stray" || RESULT=1

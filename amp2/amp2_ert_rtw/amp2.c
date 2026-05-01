@@ -9,7 +9,7 @@
  *
  * Model version                  : 1.15
  * Simulink Coder version         : 25.2 (R2025b) 28-Jul-2025
- * C/C++ source code generated on : Sat Apr 11 12:20:53 2026
+ * C/C++ source code generated on : Fri May  1 09:27:40 2026
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex-A
@@ -521,21 +521,21 @@ void amp2_CabHPF(const real_T rtu_0[128], const real_T rtu_1[128], real_T rtu_2,
   /* MATLABSystem: '<S1>/CabHPF' */
   amp2_filter(tmp_0, tmp_1, rtu_0_0, localDW->obj.zR, localB->CabHPF_o2, b);
   localDW->obj.zR[0] = b[0];
-  localDW->zL[0] = localDW->obj.zL[0];
   localDW->zR[0] = b[0];
+  localDW->zL[0] = localDW->obj.zL[0];
   localDW->obj.zR[1] = b[1];
-  localDW->zL[1] = localDW->obj.zL[1];
   localDW->zR[1] = b[1];
+  localDW->zL[1] = localDW->obj.zL[1];
 }
 
 /* Termination for atomic system: */
 void amp2_CabHPF_Term(DW_CabHPF_amp2_T *localDW)
 {
   /* Terminate for MATLABSystem: '<S1>/CabHPF' */
-  localDW->zL[0] = localDW->obj.zL[0];
   localDW->zR[0] = localDW->obj.zR[0];
-  localDW->zL[1] = localDW->obj.zL[1];
+  localDW->zL[0] = localDW->obj.zL[0];
   localDW->zR[1] = localDW->obj.zR[1];
+  localDW->zL[1] = localDW->obj.zL[1];
 }
 
 static boolean_T amp2_isequal(const real_T varargin_1[257], const real_T
@@ -993,14 +993,14 @@ void amp2_Stage2(const real_T rtu_0[128], const real_T rtu_1[128], real_T rtu_2,
     localDW->obj.zDn1R[i] = obj_zDn1R;
     obj_zDn2R = f[i];
     localDW->obj.zDn2R[i] = obj_zDn2R;
-    localDW->zDn2R[i] = obj_zDn2R;
     localDW->zUp1L[i] = localDW->obj.zUp1L[i];
-    localDW->zUp2R[i] = drive;
-    localDW->zDn1R[i] = obj_zDn1R;
-    localDW->zUp1R[i] = b;
-    localDW->zDn1L[i] = localDW->obj.zDn1L[i];
     localDW->zDn2L[i] = localDW->obj.zDn2L[i];
+    localDW->zUp2R[i] = drive;
+    localDW->zUp1R[i] = b;
+    localDW->zDn2R[i] = obj_zDn2R;
+    localDW->zDn1L[i] = localDW->obj.zDn1L[i];
     localDW->zUp2L[i] = localDW->obj.zUp2L[i];
+    localDW->zDn1R[i] = obj_zDn1R;
   }
 }
 
@@ -1008,14 +1008,14 @@ void amp2_Stage2(const real_T rtu_0[128], const real_T rtu_1[128], real_T rtu_2,
 void amp2_Stage2_Term(DW_Stage2_amp2_T *localDW)
 {
   /* Terminate for MATLABSystem: '<S3>/Stage2' */
-  memcpy(&localDW->zDn2R[0], &localDW->obj.zDn2R[0], 14U * sizeof(real_T));
   memcpy(&localDW->zUp1L[0], &localDW->obj.zUp1L[0], 14U * sizeof(real_T));
-  memcpy(&localDW->zUp2R[0], &localDW->obj.zUp2R[0], 14U * sizeof(real_T));
-  memcpy(&localDW->zDn1R[0], &localDW->obj.zDn1R[0], 14U * sizeof(real_T));
-  memcpy(&localDW->zUp1R[0], &localDW->obj.zUp1R[0], 14U * sizeof(real_T));
-  memcpy(&localDW->zDn1L[0], &localDW->obj.zDn1L[0], 14U * sizeof(real_T));
   memcpy(&localDW->zDn2L[0], &localDW->obj.zDn2L[0], 14U * sizeof(real_T));
+  memcpy(&localDW->zUp2R[0], &localDW->obj.zUp2R[0], 14U * sizeof(real_T));
+  memcpy(&localDW->zUp1R[0], &localDW->obj.zUp1R[0], 14U * sizeof(real_T));
+  memcpy(&localDW->zDn2R[0], &localDW->obj.zDn2R[0], 14U * sizeof(real_T));
+  memcpy(&localDW->zDn1L[0], &localDW->obj.zDn1L[0], 14U * sizeof(real_T));
   memcpy(&localDW->zUp2L[0], &localDW->obj.zUp2L[0], 14U * sizeof(real_T));
+  memcpy(&localDW->zDn1R[0], &localDW->obj.zDn1R[0], 14U * sizeof(real_T));
 }
 
 static boolean_T amp2_isequal_n(const real_T varargin_1[257], const real_T
